@@ -44,8 +44,8 @@ def visualize_caida():
 
 def cal_corrcoef():
 
-    data_file = '/home/wangjing/LocalResearch/ddos-20070804/ddostrace.20070804_134936.pcap'
-    pcap2flow(data_file, './Result/flows.txt', 1)
+    # data_file = '/home/wangjing/LocalResearch/ddos-20070804/ddostrace.20070804_134936.pcap'
+    # pcap2flow(data_file, './Result/flows.txt', 1)
     interval = 10
     dur = 10
 
@@ -55,6 +55,7 @@ def cal_corrcoef():
         tg = NetworkXGraph('./Result/flows.txt')
         ips = tg.get_vertices()
         tg.add_vertices(ips)
+        # import ipdb;ipdb.set_trace()
 
         records = tg.filter(prot=None, rg=[i * interval, i * interval + dur], rg_type='time')
         edges = tg.get_edges(records)
@@ -148,7 +149,8 @@ def plot_dd():
 
 
 if __name__ == "__main__":
-    visualize_caida()
+    cal_corrcoef()
+    # visualize_caida()
     # cal_corrcoef()
     # ana_corrcoef()
     # degree_distribution()

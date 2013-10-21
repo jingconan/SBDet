@@ -1,5 +1,19 @@
 #!/usr/bin/env python
 """ An simple script to export flow, for test use only
+
+Notes
+----------------------
+the output format is
+    start_transimission_time
+    src_ip_address
+    dst_ip_address
+    port_or_protocol
+    byte_size_in_flow
+    duration_of_flow
+
+Example
+----------------
+0.095263 71.126.222.64 195.198.120.238 0 88.0 1.002565
 """
 from __future__ import print_function, division
 

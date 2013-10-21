@@ -163,8 +163,8 @@ class Igraph(TrafficGraph):
         self.graph.add_edges(self.i_edges)
 
     def gen_layout(self):
-        # return self.graph.layout("circular")
-        return self.graph.layout("kk")
+        return self.graph.layout("circular")
+        # return self.graph.layout("kk")
 
     def plot(self, *args, **kwargs):
         # vertex_label = [self.ip_to_name[ip] for ip in self.graph.vs['name']]
