@@ -3,27 +3,32 @@
 from __future__ import print_function, division
 
 SADIT_PATH = '/home/wangjing/Dropbox/Research/CyberSecurity/CommunityDetection/sadit_with_traffic_graph/sadit'
+ABNORMAL_FLOWS_FILE = './Result/flows.txt'
+OVERLAY_ADJ_FILE = './overlay_adj.pkz'
+DOT_FILE = './test.dot'
+
 import sys
 sys.path.insert(0, SADIT_PATH.rstrip('sadit'))
 sys.path.insert(0, SADIT_PATH)
-
-# from sadit.Experiment.GUITopoSim import get_inet_adj_mat, fix_fs_addr_prefix_bug
-from sadit.Configure import gen_dot
-
-# zeros = lambda s:[[0 for i in xrange(s[1])] for j in xrange(s[0])]
+import os
 import numpy as np
 import networkx as nx
+from subprocess import check_call
+
+from Util import zload
+from Util import log
+# from sadit.Experiment.GUITopoSim import get_inet_adj_mat, fix_fs_addr_prefix_bug
+from sadit.Configure import gen_dot
+from CGraph import NetworkXGraph
+# from FlowExporter import pcap2flow
+
+# zeros = lambda s:[[0 for i in xrange(s[1])] for j in xrange(s[0])]
 # np_ver = [int(v) for v in np.__version__.split('rc')[0].split('.')]
 # if np_ver[1] < 7:
 #     raise Exception('must install numpy with version > 1.7')
 
 # from numpy import zeros
-
-from CGraph import NetworkXGraph
-from FlowExporter import pcap2flow
-
 # from random import randrange
-
 
 def gen_rand_ips(num):
     not_valid = [10,127,169,172,192]
@@ -41,9 +46,10 @@ def gen_rand_ips(num):
 # Get topology
 # adj = get_inet_adj_mat('../inet-3.0/inet_out.txt')
 # adj = np.array(adj)
-graph = nx.erdos_renyi_graph(100, 0.08)
+# graph = nx.erdos_renyi_graph(100, 0.08)
 # adj = np.ones((100, 100))
-adj = np.asarray(nx.to_numpy_matrix(graph))
+# adj = np.asarray(nx.to_numpy_matrix(graph))
+adj = zload(OVERLAY_ADJ_FILE)
 # import ipdb;ipdb.set_trace()
 
 # generate flow data
@@ -51,7 +57,7 @@ adj = np.asarray(nx.to_numpy_matrix(graph))
 # pcap2flow(pcap_data_file, './Result/flows.txt', 1)
 
 # get ip address
-tg = NetworkXGraph('./Result/flows.txt')
+tg = NetworkXGraph(ABNORMAL_FLOWS_FILE)
 ips = tg.get_vertices()
 N = ips.shape[0]  # no. of know ip addresses
 
@@ -86,17 +92,11 @@ net_desc['node_type'] = 'NNode'
 
 
 g_size = adj.shape[0]
-# norm_desc = dict()
-# norm_desc['src_nodes'] = range(nodes_num)
-# norm_desc['dst_nodes'] = range(nodes_num)
-# norm_desc['TYPE'] = 'stationary'
-# norm_desc['node_para'] = 'stationary'
-
 
 #################################
 ##   Parameter For Normal Case ##
 #################################
-sim_t = 3600  # simulation time
+sim_t = 3000  # simulation time
 start = 0  # start time
 DEFAULT_PROFILE = ((sim_t,),(1,))
 
@@ -104,7 +104,7 @@ gen_desc1 = {
     'TYPE':'harpoon',  # type of flow generated, defined in fs
     'flow_size_mean':'4e3',  # flow size is normal distribution. Mean
     'flow_size_var':'100',  # variance
-    'flow_arrival_rate':'0.1'  # flow arrival is poisson distribution. Arrival rate
+    'flow_arrival_rate':'0.02'  # flow arrival is poisson distribution. Arrival rate
 }
 
 norm_desc = dict(
@@ -119,7 +119,13 @@ norm_desc = dict(
     dst_nodes=range(g_size),
 )
 
-gen_dot([], net_desc, norm_desc, './test.dot')
+log('generate %s ' % (DOT_FILE))
+gen_dot([], net_desc, norm_desc, DOT_FILE)
+
+log('run simulator')
+os.environ['SADIT_ROOT'] = SADIT_PATH
+check_call(['python', SADIT_PATH + '/Simulator/fs.py', '-t', str(sim_t),
+            DOT_FILE])
 
 # print network settings
 # import pprint
