@@ -184,3 +184,7 @@ def I1(nu, mu):
     return sum(H(a, b) for a, b in zip(nu, mu))
 
 
+import sys
+def progress_bar(i):
+    sys.stdout.write("\r%d%%" % i)
+    sys.stdout.flush()
