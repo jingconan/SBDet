@@ -6,15 +6,18 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from collections import Counter
 
+from .Data import HDF_FlowExporter
+from .CGraph import Igraph
 from .CGraph import NetworkXGraph
 from .Util import dump, load
 from .Util import I1
-from .Util import np_index
+from .Util import np_index, np_to_dotted
 from .Util import progress_bar
 from .Util import DataEndException
 
 
-def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0), directed=False):
+def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0),
+            directed=False, tp='igraph'):
     """ Calculate the Social Interaction Graph (SIG)
 
     Parameters
@@ -27,10 +30,12 @@ def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0), directed=False
         Only flows whose timestamps belong to [start_time, end_time) are used.
     directed : bool
         if true, the SIG is directed, otherwise it is undirected.
+    tp : {'igraph', 'networkx'}
+        type of graph
 
     Returns
     --------------
-    sigs : list of NetworkX Graph
+    sigs : list of Graphs with format specified by tp
 
     """
     start_time, end_time = rg
@@ -40,13 +45,21 @@ def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0), directed=False
     print('N', N)
 
     sigs = []
+    data = HDF_FlowExporter(data_file)
+    # TGraph = NetworkXGraph
+    TGraph_map = {
+                  'igraph': Igraph,
+                  'networkx': NetworkXGraph,
+                  }
+    TGraph = TGraph_map[tp]
+
+    ips = TGraph(data).get_vertices()
+    ips = [np_to_dotted(ip) for ip in ips]
     try:
         for i in xrange(N):
             progress_bar(i * 1.0 / N * 100)
-            tg = NetworkXGraph(data_file)
-            ips = tg.get_vertices()
+            tg = TGraph(data)
             tg.add_vertices(ips)
-
             records = tg.filter(prot=None,
                                 rg=[start_time + i * interval, start_time + i * interval + dur],
                                 rg_type='time')
@@ -81,9 +94,14 @@ def animate_SIGs(sigs, ani_folder):
     if not os.path.exists(ani_folder):
         os.mkdir(ani_folder)
 
+    N = len(sigs)
+    print('animation progress:')
     for i, ig in enumerate(sigs):
-        layout = ig.gen_layout() if layout is None else layout
-        ig.plot(ani_folder + "%04d.png" % (i), layout=layout)
+        progress_bar(i * 1.0 / N * 100)
+        # nig = NetworkXGraph(graph=ig)
+        nig = Igraph(graph=ig)
+        layout = nig.gen_layout() if layout is None else layout
+        nig.plot(ani_folder + "%04d.png" % (i), layout=layout)
 
 
 def degree_distribution(G):

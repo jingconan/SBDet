@@ -212,4 +212,8 @@ def np_index(A, B):
     C = np.where(A.view(dtype) == B.view(dtype))
     return C[0]
 
+def np_to_dotted(ip):
+    return '{0}.{1}.{2}.{3}'.format(*ip)
+    # ip_s = str(ip)
+    # return '.'.join(ip_s.strip('[] ').rsplit())
 

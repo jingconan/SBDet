@@ -7,7 +7,8 @@ from collections import Counter
 import matplotlib.pyplot as plt
 
 from .Util import abstract_method
-from .Data import HDF_FlowExporter
+from .Util import np_to_dotted
+# from .Data import HDF_FlowExporter
 
 # def pcap2csv(pcap_file_name, csv_name):
 #     txt_f_name = pcap_file_name.rsplit('.pcap')[0] + '_tshark.txt'
@@ -32,9 +33,7 @@ def np_union2d(A, B):
     return C
 
 
-def np_to_dotted(ip):
-    ip_s = str(ip)
-    return '.'.join(ip_s.strip('[] ').rsplit())
+
 
 
 class TrafficGraph(object):
@@ -49,9 +48,10 @@ class TrafficGraph(object):
         two fields: 1 node_name, 2 node_ip.
     """
 
-    def __init__(self, f_name, node_info=None):
-        self.f_name = f_name
+    def __init__(self, data=None, node_info=None, graph=None):
+        self.data = data
         self.node_info = node_info
+
 
         # map ip to name
         if node_info is not None:
@@ -59,8 +59,10 @@ class TrafficGraph(object):
             for name, ip_table in zip(node_info['node_name'], node_info['node_ip']):
                 for ip in ip_table:
                     self.ip_to_name[ip.rsplit('/')[0]] = name
-
-        self._init()
+        if graph is not None:
+            self.graph = graph
+        else:
+            self._init()
 
     def _init(self):
         abstract_method()
@@ -70,7 +72,7 @@ class TrafficGraph(object):
 
         Parameters
         ---------------
-        ips : list of tuples or np.2darray
+        ips : list of dot-sparated string
             ip addresses for vertices
 
         Returns
@@ -146,13 +148,14 @@ class Igraph(TrafficGraph):
     See `TrafficGraph`
     """
     def _init(self):
-        self.data = HDF_FlowExporter(self.f_name)
+        # self.data = HDF_FlowExporter(self.f_name)
         self.adj_mat = None
         self.graph = igraph.Graph(directed=True)
 
     def add_vertices(self, ips):
-        for ip in ips:
-            self.graph.add_vertex(name=np_to_dotted(ip))
+        self.graph.add_vertices(ips)
+        # for ip in ips:
+            # self.graph.add_vertex(name=np_to_dotted(ip))
 
     def add_edges(self, edges):
         if len(edges) == 0:
@@ -168,8 +171,9 @@ class Igraph(TrafficGraph):
 
     def plot(self, *args, **kwargs):
         # vertex_label = [self.ip_to_name[ip] for ip in self.graph.vs['name']]
-        # vertex_label = self.graph.vs['name']
-        vertex_label = [str(i) for i in xrange(len(self.ips))]
+        vertex_label = self.graph.vs['name']
+        # import ipdb;ipdb.set_trace()
+        # vertex_label = [str(i) for i in xrange(len(self.ips))]
         igraph.plot(self.graph, *args,
                     # layout=layout,
                     vertex_label=vertex_label,
@@ -185,13 +189,14 @@ class NetworkXGraph(TrafficGraph):
     """
 
     def _init(self):
-        self.data = HDF_FlowExporter(self.f_name)
+        # self.data = HDF_FlowExporter(self.f_name)
         self.adj_mat = None
         self.graph = nx.DiGraph()
 
     def add_vertices(self, ips):
-        for ip in ips:
-            self.graph.add_node(np_to_dotted(ip))
+        self.graph.add_nodes_from(ips)
+        # for ip in ips:
+            # self.graph.add_node(np_to_dotted(ip))
 
     def add_edges(self, edges):
         for (src, dst), weight in edges.iteritems():
