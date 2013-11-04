@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function, division, absolute_import
 import numpy as np
-import igraph
 import networkx as nx
 from collections import Counter
 import matplotlib.pyplot as plt
 
+from .Util import igraph
 from .Util import abstract_method
 from .Util import np_to_dotted
 # from .Data import HDF_FlowExporter

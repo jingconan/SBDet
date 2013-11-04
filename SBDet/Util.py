@@ -217,3 +217,28 @@ def np_to_dotted(ip):
     # ip_s = str(ip)
     # return '.'.join(ip_s.strip('[] ').rsplit())
 
+try:
+    import igraph
+except ImportError:
+    igraph = False
+
+
+try:
+    import scipy as sp
+except ImportError:
+    sp = False
+
+try:
+    import scipy.linalg as la
+except ImportError:
+    la = False
+
+try:
+    import scipy.stats as stats
+except ImportError:
+    stats = False
+
+
+
+
+
