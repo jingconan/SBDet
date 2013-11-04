@@ -1,16 +1,17 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
+from __future__ import print_function, division, absolute_import
 import os
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+from collections import Counter
 
-from CGraph import Igraph, NetworkXGraph
-# from Util import zdump,
-from Util import dump, load
-from Util import I1
-from Util import np_index
-from Util import progress_bar
+from .CGraph import NetworkXGraph
+from .Util import dump, load
+from .Util import I1
+from .Util import np_index
+from .Util import progress_bar
+from .Util import DataEndException
 
 
 def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0), directed=False):
@@ -33,9 +34,12 @@ def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0), directed=False
 
     """
     start_time, end_time = rg
-    N = (end_time - start_time) // dur
+    print('end_time', end_time)
+    print('start_time', start_time)
+    N = int((end_time - start_time) // dur)
+    print('N', N)
 
-    tdgs = []
+    sigs = []
     try:
         for i in xrange(N):
             progress_bar(i * 1.0 / N * 100)
@@ -49,8 +53,9 @@ def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0), directed=False
             edges = tg.get_edges(records)
             tg.add_edges(edges)
 
-            tdgs.append(tg.graph)
-    except:
+            sigs.append(tg.graph)
+
+    except DataEndException as e:
         print('reach end')
 
     return sigs
@@ -60,22 +65,15 @@ def cal_cor(sigs, pivot_nodes):
     """  calculate the correlation of each node's interaction with pivot
     nodes
     """
-    victim_index = np_index(ips, victim)
+    ips = sigs[0].get_vertices()
+    victim_index = np_index(ips, pivot_nodes)
+    adj_mats = []
     for i, tg in enumerate(sigs):
         am = np.array(nx.adj_matrix(tg.graph), copy=True)
         adj_mats.append(am[:, victim_index].reshape(-1))
 
     npcor = np.corrcoef(adj_mats, rowvar=0)
     return npcor
-
-    # zdump(npcor, dump_f_name)
-
-    # np_cor_no_nan = np.nan_to_num(npcor)
-    # plt.pcolor(np_cor_no_nan)
-    # plt.colorbar()
-    # plt.show()
-    # import ipdb;ipdb.set_trace()
-    pass
 
 
 def animate_SIGs(sigs, ani_folder):
@@ -84,42 +82,8 @@ def animate_SIGs(sigs, ani_folder):
         os.mkdir(ani_folder)
 
     for i, ig in enumerate(sigs):
-        layout = tg.gen_layout() if layout is None else layout
-        tg.plot(ani_folder + "%04d.png" % (i), layout=layout)
-
-
-
-def visualize_caida(f_name):
-
-    interval = 10
-    dur = 10
-    start_time = 0
-    end_time = 30
-    N = (end_time - start_time) // dur
-
-    layout = None
-
-    # ani_folder = './imalse_ddos_n_0_3/'
-    ani_folder = './Result/merged2/'
-    if not os.path.exists(ani_folder):
-        os.mkdir(ani_folder)
-
-    for i in xrange(N):
-        print('i=', i)
-        # tg = NetworkXGraph('./test.txt', node_info)
-        tg = Igraph(f_name)
-        ips = tg.get_vertices()
-        tg.add_vertices(ips)
-        # records = tg.filter(prot='UDP', rg=[i * interval, i * interval + dur], rg_type='time')
-        records = tg.filter(prot=None,
-                            rg=[start_time + i * interval, start_time + i * interval + dur],
-                            rg_type='time')
-        edges = tg.get_edges(records)
-        tg.add_edges(edges)
-        layout = tg.gen_layout() if layout is None else layout
-        tg.plot(ani_folder + "%04d.png" % (i), layout=layout)
-
-from collections import Counter
+        layout = ig.gen_layout() if layout is None else layout
+        ig.plot(ani_folder + "%04d.png" % (i), layout=layout)
 
 
 def degree_distribution(G):

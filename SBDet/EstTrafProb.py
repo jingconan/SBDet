@@ -13,8 +13,8 @@ from __future__ import print_function, division, absolute_import
 import numpy as np
 import openopt as opt
 
-from Util import progress_bar
-from Util import load, dump
+from .Util import progress_bar
+from .Util import load, dump
 # import networkx as nx
 import matplotlib.pyplot as plt
 
