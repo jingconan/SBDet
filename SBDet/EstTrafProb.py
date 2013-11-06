@@ -1,23 +1,16 @@
 #!/home/wangjing/Apps/python/bin/python
 #!/usr/bin/env python
-
 """  Estimate the Null Model using Entropy Maximization
-
-Parameters
----------------
-Returns
---------------
 """
-#############
 from __future__ import print_function, division, absolute_import
 import numpy as np
 import openopt as opt
-
+import matplotlib.pyplot as plt
+import scipy.sparse as sps
 from .Util import progress_bar
 from .Util import load, dump
-# import networkx as nx
-import matplotlib.pyplot as plt
 
+npv = [int(i) for i in np.__version__.rsplit('.')]
 
 def QP(yp, c_vec, N, T, solver='cplex', H_vec=None, b_vec=None):
     # the shape of c_vec is  (N*N, T)
@@ -44,8 +37,8 @@ def QP(yp, c_vec, N, T, solver='cplex', H_vec=None, b_vec=None):
                ub=1.0 * np.ones((T,)))
     r = p._solve(solver, iprint=0)
     f_opt, x_opt = r.ff, r.xf
-    print('x_opt', x_opt)
-    print('f_opt', f_opt)
+    # print('x_opt', x_opt)
+    # print('f_opt', f_opt)
     return f_opt, x_opt
 
 def test():
@@ -59,10 +52,32 @@ def test():
     QP(yp, c_vec, 'cvxopt_qp')
 
 #############
-import scipy.sparse as sps
 
 
-def EstTrafProb(adj_mats, T=None, eps=1e-5):
+def EstTrafProb(adj_mats, eps=1e-5, T=None,):
+    """  Estimate the probability distribution for Generalized Configuration
+    Model (GCM)
+
+    Parameters
+    ---------------
+    adj_mats : a list of np.2darray
+        adj_matrs of some Social Interaction Graphs (SIGs)
+
+    Returns
+    --------------
+    tr : dict
+        solution : list
+            weights of each graph
+        f_opt : float
+            the maximial entropy
+        err : float
+            error of two adjacent solution
+    """
+
+    if npv[1] < 7:
+        raise Exception('to run EstTrafProb. numpy version must be greater than 1.7')
+
+
     if T is not None:
         adj_mats = adj_mats[:T]
 
@@ -99,94 +114,80 @@ def EstTrafProb(adj_mats, T=None, eps=1e-5):
     tr['solution'] = yp
     tr['f_obj'] = f_obj
     return tr
-    # plt.plot(tr['err'])
-    # plt.show()
-    # import ipdb;ipdb.set_trace()
-
-import copy
-def EstTrafProbBatch(adj_mats, T=10):
-    TT =  len(adj_mats)
-    print('TT', TT)
-    st = 0
-    tr = dict()
-    tr['batch'] = []
-    sol = []
-    for i in xrange(0, TT//T):
-        print('*'*20)
-        print('i: ', i)
-        print('*'*20)
-        new_adj = copy.deepcopy(adj_mats[(i*T):((i+1)*T)])
-        tr_b = EstTrafProb(new_adj)
-        tr['batch'].append(tr_b)
-        sol.append(tr_b['solution'])
-
-    import ipdb;ipdb.set_trace()
-    tr['solution'] = np.concatenate(sol)
 
 
+def ident_pivot_nodes(adjs, weights, thres):
+    """ identify the pivot nodes
+
+    Parameters
+    ---------------
+    adjs : a list of sparse matrices.
+        SIG. Assume to be symmetric
+    weights : a list of float
+        weights of each SIG
+
+    Returns
+    --------------
+    """
+    N = adjs[0].shape[0]
+    T = len(weights)
+    total_inta_mat = np.zeros((N, T))
+    for t, adj in enumerate(adjs):
+        total_inta_mat[:, t] = adj.sum(axis=1).reshape(-1)
+    total_inta_mat = np.dot(total_inta_mat, weights)
+    total_inta_mat /= np.max(total_inta_mat)
+    pivot_nodes, = np.where(total_inta_mat > thres)
+    return pivot_nodes
 
 
+def cal_inta_pnodes(adjs, weights, pivot_nodes):
+    """  calculate the interactions of nodes with pivot_nodes using GCM
 
-# def main():
-    # adj = load('./Result/merged_stored_TDG.pkz')
-    # pass
-# main()
-# graphs = load('./Result/merged_stored_TDG.pk')
+    Parameters
+    ---------------
+    adjs : a list of sparse matrices.
+        SIG. Assume to be symmetric
+    weights : a list of float
+        weights of each SIG
+    pivot_nodes : list of ints
+        a set of nodes that may be leaders or the victims of the botnet
 
-# adj_mats = [nx.to_scipy_sparse_matrix(g) for g in graphs]
-# dump(adj_mats, './Result/merged_TDG_sparse_adjs.pk')
+    Returns
+    --------------
+    """
+    N = adjs[0].shape[0]
+    T = len(weights)
+    inta_mat = np.zeros((N, T))
+    for t, adj in enumerate(adjs):
+        res = np.sum(adj[list(pivot_nodes), :].todense(), axis=0).reshape(-1)
+        inta_mat[:, t] = res
+    inta = np.dot(inta_mat, weights)
+    return inta
 
-# calculate probability to have traffic from node i to j.
-# adj_mats = load('./Result/merged_TDG_sparse_adjs.pk')
-# adj_mats = adj_mats[0:5]
-# dump(adj_mats, './Result/merged_TDG_sparse_adjs_first_5.pk')
+def cal_cor_graph(adjs, pivot_nodes, thres):
+    """  calculate the correlation graph
 
-import time
-def cal_time_complexity_with_T():
-    # adj_mats = load('./Result/merged_TDG_sparse_adjs_first_5.pk')
-    adj_mats = load('./Result/merged_TDG_sparse_adjs.pk')
-    tr = dict()
-    tr['T'] = range(5, 50, 5)
-    tr['run_time'] = []
-    tr['run_tr'] = []
-    for t in tr['T']:
-        print('**'*20)
-        print('t, ', t)
-        print('**'*20)
-        st = time.time()
-        tr_run = EstTrafProb(adj_mats, t)
-        et = time.time()
-        tr['run_time'].append(et - st)
-        tr['run_tr'].append(tr_run)
-    dump(tr, './Result/time_complexity_with_T.pk')
+    Parameters
+    ---------------
+    adjs : a list of sparse matrices.
+        SIG. Assume to be symmetric
+    pivot_nodes : list of ints
+        a set of nodes that may be leaders or the victims of the botnet
+    thres : float
+        threshold for constructing correlation graph
 
-# cal_time_complexity_with_T()
-
-
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
-def plot_EM_err(f_name):
-    # tr = load('./Result/EM_simple_trace.pk')
-    tr = load(f_name)
-    plt.plot(tr['err'], '+-')
-    plt.title('$|y_{k+1} - y_k|$')
-    plt.xlabel('iteration')
-    plt.ylabel('difference')
-    plt.savefig('EM_err.pdf')
-    plt.show()
+    Returns
+    --------------
+    A : np.2darray
+        adj matrix of the correlation graph
+    npcor : np.2darray
+        matrix of correlation coefficients.
+    """
+    inta = lambda x: np.array(adj[pivot_nodes, :].todense()).reshape(-1)
+    traf = np.asarray([inta(adj) for adj in adjs])
+    npcor = np.corrcoef(traf, rowvar=0)
+    np_cor_no_nan = np.nan_to_num(npcor)
+    A = np_cor_no_nan > thres
+    return A, npcor
 
 
-# plot_EM_err('./Result/EM_simple_trace.pk')
-########################
-
-def plot_time_complexity():
-    tr = load('./Result/time_complexity_with_T.pk')
-    plt.plot(tr['T'], tr['run_time'], 'b-+')
-    plt.title('time vs no. of observed TDGs')
-    plt.xlabel('no. of observed TDGs')
-    plt.ylabel('time used by EM')
-    plt.savefig('time_vs_num_TDG.pdf')
-    plt.show()
-
-# plot_time_complexity()
-########################

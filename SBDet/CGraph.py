@@ -150,7 +150,8 @@ class Igraph(TrafficGraph):
     def _init(self):
         # self.data = HDF_FlowExporter(self.f_name)
         self.adj_mat = None
-        self.graph = igraph.Graph(directed=True)
+        self.graph = igraph.Graph(directed=False)
+        # self.graph = igraph.Graph(directed=True)
 
     def add_vertices(self, ips):
         self.graph.add_vertices(ips)
@@ -191,7 +192,8 @@ class NetworkXGraph(TrafficGraph):
     def _init(self):
         # self.data = HDF_FlowExporter(self.f_name)
         self.adj_mat = None
-        self.graph = nx.DiGraph()
+        # self.graph = nx.DiGraph()
+        self.graph = nx.Graph()
 
     def add_vertices(self, ips):
         self.graph.add_nodes_from(ips)
