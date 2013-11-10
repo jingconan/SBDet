@@ -9,6 +9,7 @@ from .Util import Find, DataEndException
 from .Util import zload
 # from Util import np
 import numpy as np
+import csv
 
 
 class Data(object):
@@ -207,30 +208,30 @@ class HDF_FS(PreloadHardDiskFile):
     """
     RE = '[\[\] :\->]'
     FORMAT = [
-            ('start_time', 3, np.float64),
-            ('end_time', 4, np.float64),
-            ('src_ip', 5, IP),
-            ('src_port', 6, np.int16),
-            ('dst_ip', 8, IP),
-            ('dst_port', 9, np.int16),
-            ('prot', 10, np.str_),
-            ('node', 12, np.str_),
-            ('flow_size', 14, np.float64),
-            ('duration', 13, np.float64),
-            ]
+        ('start_time', 3, np.float64),
+        ('end_time', 4, np.float64),
+        ('src_ip', 5, IP),
+        ('src_port', 6, np.int16),
+        ('dst_ip', 8, IP),
+        ('dst_port', 9, np.int16),
+        ('prot', 10, np.str_),
+        ('node', 12, np.str_),
+        ('flow_size', 14, np.float64),
+        ('duration', 13, np.float64),
+    ]
 
     DT = np.dtype([
         ('start_time', np.float64, 1),
         ('end_time', np.float64, 1),
         ('src_ip', np.uint8, (4,)),
         ('src_port', np.int16, 1),
-        ('dst_ip', np.int16, (4,)),
+        ('dst_ip', np.int8, (4,)),
         ('dst_port', np.int16, 1),
         ('prot', np.str_, 5),
-        ('node', np.str_ , 5),
+        ('node', np.str_, 5),
         ('flow_size', np.float64, 1),
         ('duration', np.float64, 1),
-        ])
+    ])
 
 
 class HDF_FlowExporter(PreloadHardDiskFile):
@@ -279,6 +280,56 @@ class HDF_DumpFS(HDF_FS):
 
         self.min_time = min(self.t)
         self.max_time = max(self.t)
+
+
+ip_to_dotted = lambda ip: ".".join(str(d)for d in ip)
+
+
+class HDF_Merge(PreloadHardDiskFile):
+    DT = np.dtype([
+        ('start_time', np.float64, 1),
+        ('src_ip', np.uint8, (4,)),
+        ('dst_ip', np.uint8, (4,)),
+        ('prot', np.str_, 5),
+        ('flow_size', np.float64, 1),
+        ('duration', np.float64, 1),
+    ])
+
+    def __init__(self, files):
+        # self.table = zload(f_name)
+        self.row_num = sum(f.row_num for f in files)
+        self.table = np.zeros(shape=(self.row_num,), dtype=self.DT)
+        cur_idx = 0
+        for f in files:
+            res = f.get_rows(fields=list(self.DT.names))
+            # due to limitation of np.array. The attributes in each data
+            # storage should have the same relative order
+            # print('res.dtype.names', res.dtype.names)
+            # print('self.DT.names', self.DT.names)
+            assert(self.DT.names == res.dtype.names)
+            self.table[cur_idx:(cur_idx + f.row_num)] = res
+            cur_idx += f.row_num
+
+        self.t = np.array([t for t in self.get_rows('start_time')])
+        t_idx = np.argsort(self.t)
+        self.table = self.table[t_idx]
+        self.t = self.t[t_idx]
+
+        self.min_time = min(self.t)
+        self.max_time = max(self.t)
+
+    def export(self, f_name):
+        with open(f_name, 'w') as csv_f:
+            writer = csv.writer(csv_f, delimiter=' ')
+             # writer.writerows(self.table)
+            for i in xrange(self.row_num):
+                writer.writerow([self.table[i]['start_time'],
+                                 ip_to_dotted(self.table[i]['src_ip']),
+                                 ip_to_dotted(self.table[i]['dst_ip']),
+                                 self.table[i]['prot'],
+                                 self.table[i]['flow_size'],
+                                 self.table[i]['duration'],
+                                 ])
 
 if __name__ == "__main__":
     import doctest
