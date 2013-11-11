@@ -142,6 +142,9 @@ class PreloadHardDiskFile(Data):
         self.min_time = min(self.t)
         self.max_time = max(self.t)
 
+    def shift_time(self, st):
+        self.t += st
+
     def get_where(self, rg=None, rg_type=None):
         if not rg:
             return 0, self.row_num
@@ -268,9 +271,18 @@ def seq_convert(args, arg_num, handlers):
 
 
 class HDF_DumpFS(HDF_FS):
-    def __init__(self, f_name):
-        self.f_name = f_name
-        self.table = zload(f_name)
+    def __init__(self, data):
+        self.data = data
+        super(HDF_DumpFS, self).__init__('')
+
+    def shift_time(self, st):
+        self.t += st
+
+    def _init(self):
+        data = self.data
+        if isinstance(data, str):
+            data = zload(data)
+        self.table = data
         self.row_num = self.table.shape[0]
 
         self.t = np.array([t for t in self.get_rows('start_time')])
@@ -296,6 +308,8 @@ class HDF_Merge(PreloadHardDiskFile):
     ])
 
     def __init__(self, files):
+        PreloadHardDiskFile.__init__(self, '')
+
         # self.table = zload(f_name)
         self.row_num = sum(f.row_num for f in files)
         self.table = np.zeros(shape=(self.row_num,), dtype=self.DT)
@@ -317,6 +331,10 @@ class HDF_Merge(PreloadHardDiskFile):
 
         self.min_time = min(self.t)
         self.max_time = max(self.t)
+
+    def _init(self):
+        pass
+
 
     def export(self, f_name):
         with open(f_name, 'w') as csv_f:

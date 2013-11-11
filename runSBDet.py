@@ -6,7 +6,46 @@ from SBDet import *
 import pylab as P
 import networkx as nx
 from subprocess import check_call
+from Util import load, zload
 
+
+def get_ips(data, format_=None):
+    nnx = NetworkXGraph(data=data)
+    if format_ is not None:
+        return [format_(ip) for ip in nnx.get_vertices()]
+    return nnx.get_vertices()
+
+
+#### Generate Dataset ######
+SADIT_PATH = '/home/wangjing/Dropbox/Research/sadit'
+# import sys
+# sys.path.insert(0, SADIT_PATH.rstrip('sadit'))
+# sys.path.insert(0, SADIT_PATH)
+from sadit.Configure import gen_dot
+
+sim_t = 3000
+og_size = 200
+dot_file = './Result/sim.dot'
+ips = get_ips(HDF_FlowExporter('./Result/flows.txt'))
+topo = get_overlay_topology(og_size)
+net_desc = create_net_desc(topo, ips)
+norm_desc = create_normal_desc(sim_t, og_size)
+gen_dot([], net_desc, norm_desc, dot_file)
+os.environ['SADIT_ROOT'] = SADIT_PATH
+check_call(['python', SADIT_PATH + '/Simulator/fs.py', '-t', str(sim_t),
+            dot_file])
+
+#### Sample Dataset ######
+NORMAL_DATA = '/home/wangjing/Dropbox/Research/CyberSecurity/CommunityDetection/n0_flow.txt'
+
+# sampled_data = sample_traffic(HDF_FS(NORMAL_DATA), 0.1,
+                              # './Result/sampled_data.pkz')
+sampled_data = './Result/sampled_data.pkz'
+DDOS_DATA = './Result/flows.txt'
+
+merge = mix_traffic(HDF_DumpFS(sampled_data), 0,
+        HDF_FlowExporter(DDOS_DATA), 2000)
+merge.export('./Result/merged_flows.csv')
 
 #### Calculate Social Interaction Graph ####
 # sigs = cal_SIG('./Result/merged_flows.csv', tp='igraph')
@@ -50,11 +89,12 @@ sigs = load('./Result/sigs_nx.pk')
 ab_sigs = sigs[200:230]
 adj_mats = [nx.to_scipy_sparse_matrix(sig) for sig in ab_sigs]
 
+# this is memory intensive
 # tr = EstTrafProb(adj_mats)
 # dump(tr, './Result/GCM_tr.pk')
 
 #### Identify the Pivot Nodes ######
-tr = load('./Result/GCM_tr.pk')
+# tr = load('./Result/GCM_tr.pk')
 weights = tr['solution']
 p_nodes = ident_pivot_nodes(adj_mats, weights, 0.8)
 
@@ -100,23 +140,28 @@ dump(botnet_ips, './Result/botnet_ips.pk')
 
 
 #### Count Accuracy of the Result ######
-botnet_ips = load('./Result/botnet_ips.pk')
-NORMAL_DATA = './Result/sampled_dump.pkz'
+detected_ips = load('./Result/botnet_ips.pk')
+# NORMAL_DATA = './Result/sampled_dump.pkz'
+NORMAL_DATA = './Result/sampled_data.pkz'
 DDOS_DATA = './Result/flows.txt'
-def get_ips(data):
-    nnx = NetworkXGraph(data=data)
-    return nnx.get_vertices()
 
-# normal_ips = get_ips(HDF_DumpFS(NORMAL_DATA))
-ddos_ips = get_ips(HDF_FlowExporter(DDOS_DATA))
-ddos_ips = [np_to_dotted(ip) for ip in ddos_ips]
 
-ddos_set = set(ddos_ips)
-detect_set = set(botnet_ips)
-mis_ratio = len(ddos_set - detect_set) * 1.0 / len(ddos_set)
-correct_ratio = len(ddos_set & detect_set) * 1.0 / len(ddos_set)
-print('correct_ratio', correct_ratio)
-print('mis_ratio', mis_ratio)
+normal_ips = get_ips(HDF_DumpFS(NORMAL_DATA), format_=np_to_dotted)
+ddos_ips = get_ips(HDF_FlowExporter(DDOS_DATA), format_=np_to_dotted)
+
+
+OUT_STRING = """tp: %f\t fn: %f\t tn: %f\t fp: %f
+sensitivity: %f\tspecificity: %f
+"""
+data = get_quantitative(ddos_ips, detected_ips, set(normal_ips) | set(ddos_ips))
+print(self.OUT_STRING%data)
+
+# ddos_set = set(ddos_ips)
+# detect_set = set(botnet_ips)
+# mis_ratio = len(ddos_set - detect_set) * 1.0 / len(ddos_set)
+# correct_ratio = len(ddos_set & detect_set) * 1.0 / len(ddos_set)
+# print('correct_ratio', correct_ratio)
+# print('mis_ratio', mis_ratio)
 
 # P.plot(solution, '*')
 # P.show()

@@ -4,3 +4,4 @@ from .EstTrafProb import *
 from .Util import *
 from .ComDet import *
 from .Data import *
+from .DataGenerator import *
