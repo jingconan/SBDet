@@ -21,8 +21,26 @@ def com_det(A, r_vec, w, lamb, out):
     mc = 0.5 * np.sum(deg)
     M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
     M += w * np.outer(r_vec, r_vec) - lamb * np.eye(n)
+    return max_cut(M, out)
 
-    F = [M]
+
+def com_det_reg(A, r_vec, w1, w2, lamb, out):
+    n = A.shape[0]
+    deg = np.sum(A, axis=1).reshape(-1)
+    mc = 0.5 * np.sum(deg)
+    M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
+    P0 = M - lamb * np.eye(n)
+    q0 = w1 * r_vec - 0.5 * w2 * np.ones((n,))
+    qv = q0.reshape(-1, 1)
+    onev = np.array([[1]])
+    W = np.vstack([np.hstack([P0, 0.5 * qv]),
+                  np.hstack([0.5 * qv.T, onev])])
+    return max_cut(W, out)
+
+
+def max_cut(W, out):
+    n = W.shape[0]
+    F = [W]
     for i in xrange(n):
         dv = np.zeros((n,))
         dv[i] = 1
@@ -52,7 +70,7 @@ def SDPA_writer(c, F, out=sys.stdout):
     n = F[0].shape[0]
     print('%d =mdim' % (m), file=out)
     print('%d =nblocks' % (1), file=out)
-    print('%d %d' % (n, n), file=out)
+    print('%d' % (n), file=out)
     print(' '.join([str(cv)for cv in c]), file=out)
     for k, f_mat in enumerate(F):
         I, J = np.triu(f_mat).nonzero()
