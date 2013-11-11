@@ -19,7 +19,7 @@ def com_det(A, r_vec, w, lamb, out):
     n = A.shape[0]
     deg = np.sum(A, axis=1).reshape(-1)
     mc = 0.5 * np.sum(deg)
-    M =  A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
+    M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
     M += w * np.outer(r_vec, r_vec) - lamb * np.eye(n)
 
     F = [M]
@@ -28,7 +28,11 @@ def com_det(A, r_vec, w, lamb, out):
         dv[i] = 1
         F.append(np.diag(dv))
     c = np.ones((n,))
-    SDPA_writer(c, F, out)
+    if isinstance(out, str):
+        with open(out, 'w') as fid:
+            SDPA_writer(c, F, fid)
+    else:
+        SDPA_writer(c, F, out)
 
 
 def SDPA_writer(c, F, out=sys.stdout):
