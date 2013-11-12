@@ -30,12 +30,30 @@ def com_det_reg(A, r_vec, w1, w2, lamb, out):
     mc = 0.5 * np.sum(deg)
     M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
     P0 = M - lamb * np.eye(n)
+    P0 *= 0 # FIXME
     q0 = w1 * r_vec - 0.5 * w2 * np.ones((n,))
     qv = q0.reshape(-1, 1)
-    onev = np.array([[1]])
+    zerov = np.array([[0]])
     W = np.vstack([np.hstack([P0, 0.5 * qv]),
-                  np.hstack([0.5 * qv.T, onev])])
-    return max_cut(W, out)
+                  np.hstack([0.5 * qv.T, zerov])])
+    max_cut(W, out)
+    return P0, q0, W
+
+
+def com_det_reg2(A, r_vec, w1, w2, lamb, out):
+    n = A.shape[0]
+    deg = np.sum(A, axis=1).reshape(-1)
+    mc = 0.5 * np.sum(deg)
+    M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
+    P0 = M - lamb * np.eye(n) + w1 * np.outer(r_vec, r_vec)
+    q0 = - 0.5 * w2 * np.ones((n,))
+    qv = q0.reshape(-1, 1)
+    zerov = np.array([[0]])
+    W = np.vstack([np.hstack([P0, 0.5 * qv]),
+                  np.hstack([0.5 * qv.T, zerov])])
+    max_cut(W, out)
+    return P0, q0, W
+
 
 
 def max_cut(W, out):
@@ -90,8 +108,37 @@ def parse_CSDP_sol(f_name, n):
                              shape=(n, n))
     return Z, X
 
-def randomization(S):
+
+def parse_SDPA_sol(f_name, n):
+    pass
+    # return Y
+
+
+def randomization_old(S, W):
     n = S.shape[0]
-    sample = np.random.multivariate_normal(np.zeros((n,)), S.todense(), (100,))
-    ssum = np.sum(sample, axis=0)
-    return np.sign(ssum)
+    sn = 5000
+    sample = np.random.multivariate_normal(np.zeros((n,)), S.todense(), (sn,))
+    val = np.zeros((sn,))
+    for i in xrange(sn):
+        fea_sol = np.sign(sample[i, :])
+        val[i] = np.dot(np.dot(fea_sol.T, W), fea_sol)
+    best_one = np.argmax(val)
+    print('the best sampled solution is :', val[best_one])
+    return np.sign(sample[best_one, :])
+
+
+def randomization(S, P0, q0):
+    S = np.array(S.todense())
+    X = S[:-1, :-1]
+    sx = S[-1, :-1]
+    covar = X - np.outer(sx, sx)
+    n = X.shape[0]
+    sn = 5000
+    sample = np.random.multivariate_normal(np.zeros((n,)), covar, (sn,))
+    val = np.zeros((sn,))
+    for i in xrange(sn):
+        fea_sol = np.sign(sample[i, :])
+        val[i] = np.dot(np.dot(fea_sol.T, P0), fea_sol) + np.dot(q0, fea_sol)
+    best_one = np.argmax(val)
+    print('the best sampled solution is :', val[best_one])
+    return np.sign(sample[best_one, :])
