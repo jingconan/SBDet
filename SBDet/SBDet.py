@@ -223,15 +223,19 @@ def get_quantitative(A, B, W, show=True):
 
     # sensitivity is the probability of a alarm given that the this flow is
     # anormalous
-    sensitivity = tp * 1.0 / (tp + fn)
+    # sensitivity = tp * 1.0 / (tp + fn)
     # specificity is the probability of there isn't alarm given that the flow
     # is normal
-    specificity = tn * 1.0 / (tn + fp)
+    # specificity = tn * 1.0 / (tn + fp)
 
-    ret = tp, fn, tn, fp, sensitivity, specificity
+    tpr = tp * 1.0 / (tp + fn)
+    fpr = fp * 1.0 / (fp + tn)
+
+    # ret = tp, fn, tn, fp, sensitivity, specificity
+    ret = tp, fn, tn, fp, fpr, tpr
     if show:
         OUT_STRING = """tp: %f\t fn: %f\t tn: %f\t fp: %f
-        sensitivity: %f\tspecificity: %f
+        fpr: %f\ttpr: %f
         """
         print(OUT_STRING % ret)
     return ret
