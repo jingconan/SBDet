@@ -183,7 +183,7 @@ def cal_cor_graph(adjs, pivot_nodes, thres):
     npcor : np.2darray
         matrix of correlation coefficients.
     """
-    inta = lambda x: np.array(adj[pivot_nodes, :].todense()).reshape(-1)
+    inta = lambda x: np.sum(np.array(adj[pivot_nodes, :].todense()), axis=0).reshape(-1)
     traf = np.asarray([inta(adj) for adj in adjs])
     npcor = np.corrcoef(traf, rowvar=0)
     np_cor_no_nan = np.nan_to_num(npcor)
