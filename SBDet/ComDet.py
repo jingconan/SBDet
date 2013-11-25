@@ -30,7 +30,6 @@ def com_det_reg(A, r_vec, w1, w2, lamb, out):
     mc = 0.5 * np.sum(deg)
     M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
     P0 = M - lamb * np.eye(n)
-    P0 *= 0 # FIXME
     q0 = w1 * r_vec - 0.5 * w2 * np.ones((n,))
     qv = q0.reshape(-1, 1)
     zerov = np.array([[0]])

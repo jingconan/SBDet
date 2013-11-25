@@ -17,35 +17,35 @@ def get_ips(data, format_=None):
 
 
 #### Generate Dataset ######
-SADIT_PATH = '/home/wangjing/Dropbox/Research/sadit'
+# SADIT_PATH = '/home/wangjing/Dropbox/Research/sadit'
 # import sys
 # sys.path.insert(0, SADIT_PATH.rstrip('sadit'))
 # sys.path.insert(0, SADIT_PATH)
-from sadit.Configure import gen_dot
+# from sadit.Configure import gen_dot
 
-sim_t = 3000
-og_size = 200
-dot_file = './Result/sim.dot'
-ips = get_ips(HDF_FlowExporter('./Result/flows.txt'))
-topo = get_overlay_topology(og_size)
-net_desc = create_net_desc(topo, ips)
-norm_desc = create_normal_desc(sim_t, og_size)
-gen_dot([], net_desc, norm_desc, dot_file)
-os.environ['SADIT_ROOT'] = SADIT_PATH
-check_call(['python', SADIT_PATH + '/Simulator/fs.py', '-t', str(sim_t),
-            dot_file])
+# sim_t = 3000
+# og_size = 200
+# dot_file = './Result/sim.dot'
+# ips = get_ips(HDF_FlowExporter('./Result/flows.txt'))
+# topo = get_overlay_topology(og_size)
+# net_desc = create_net_desc(topo, ips)
+# norm_desc = create_normal_desc(sim_t, og_size)
+# gen_dot([], net_desc, norm_desc, dot_file)
+# os.environ['SADIT_ROOT'] = SADIT_PATH
+# check_call(['python', SADIT_PATH + '/Simulator/fs.py', '-t', str(sim_t),
+#             dot_file])
 
 #### Sample Dataset ######
-NORMAL_DATA = '/home/wangjing/Dropbox/Research/CyberSecurity/CommunityDetection/n0_flow.txt'
+# NORMAL_DATA = '/home/wangjing/Dropbox/Research/CyberSecurity/CommunityDetection/n0_flow.txt'
 
 # sampled_data = sample_traffic(HDF_FS(NORMAL_DATA), 0.1,
                               # './Result/sampled_data.pkz')
-sampled_data = './Result/sampled_data.pkz'
-DDOS_DATA = './Result/flows.txt'
+# sampled_data = './Result/sampled_data.pkz'
+# DDOS_DATA = './Result/flows.txt'
 
-merge = mix_traffic(HDF_DumpFS(sampled_data), 0,
-        HDF_FlowExporter(DDOS_DATA), 2000)
-merge.export('./Result/merged_flows.csv')
+# merge = mix_traffic(HDF_DumpFS(sampled_data), 0,
+#         HDF_FlowExporter(DDOS_DATA), 2000)
+# merge.export('./Result/merged_flows.csv')
 
 #### Calculate Social Interaction Graph ####
 # sigs = cal_SIG('./Result/merged_flows.csv', tp='igraph')
@@ -85,16 +85,16 @@ merge.export('./Result/merged_flows.csv')
 
 
 #### Estimate the Generalized Configuration Model (GCM) ####
+ab_ids = range(200, 230)
 sigs = load('./Result/sigs_nx.pk')
-ab_sigs = sigs[200:230]
-adj_mats = [nx.to_scipy_sparse_matrix(sig) for sig in ab_sigs]
+adj_mats = [nx.to_scipy_sparse_matrix(sigs[i]) for i in ab_ids]
 
-# this is memory intensive
+# NOTE this is memory intensive
 # tr = EstTrafProb(adj_mats)
 # dump(tr, './Result/GCM_tr.pk')
 
 #### Identify the Pivot Nodes ######
-# tr = load('./Result/GCM_tr.pk')
+tr = load('./Result/GCM_tr.pk')
 weights = tr['solution']
 p_nodes = ident_pivot_nodes(adj_mats, weights, 0.8)
 
@@ -112,28 +112,28 @@ inta = cal_inta_pnodes(adj_mats, tr['solution'], p_nodes)
 
 
 #### Calculate the correlation graph ####
-# A, npcor = cal_cor_graph(adj_mats, p_nodes, 0.2)
+A, npcor = cal_cor_graph(adj_mats, p_nodes, 0.2)
 # nxg = nx.from_numpy_matrix(A)
 # save_graph(nxg, './Result/cor_graph_0.2.pdf')
 
 #### Community Detection #######
-# with open('./prob.sdpb', 'w') as f:
-#     com_det(A, inta, w=10, lamb=10, out=f)
-
-
-# check_call['./csdp6.1.0linuxp4/bin/csdp ./prob.sdpb ./botnet.sol',
-#            shell=True]
+com_det(A, inta, w=100, lamb=0, out='./prob.sdpb')
+check_call('./csdp6.1.0linuxp4/bin/csdp ./prob.sdpb ./botnet.sol',
+           shell=True)
 
 
 ##### Randomization to Generate Feasible Solution #######
 # Z, X = parse_CSDP_sol('./csdp6.1.0linuxp4/bin/botnet.sol', 1170)
-Z, X = parse_CSDP_sol('./botnet.sol', 1170)
+node_num = len(inta)
+Z, X = parse_CSDP_sol('./botnet.sol', node_num)
 solution = randomization(X)
 inta_diff = np.dot(inta, solution)
-print('inta_diff', inta_diff)
+# print('inta_diff', inta_diff)
 botnet, = np.nonzero(solution == P.sign(inta_diff))
-print('botnet', botnet)
-nodes = ab_sigs[0].nodes()
+# print('botnet', botnet)
+print('[%i] ips out of [%i] ips are detected as bots' %
+      (len(botnet), node_num))
+nodes = sigs[ab_ids[0]].nodes()
 botnet_ips = [nodes[b] for b in botnet]
 
 dump(botnet_ips, './Result/botnet_ips.pk')
@@ -149,12 +149,8 @@ DDOS_DATA = './Result/flows.txt'
 normal_ips = get_ips(HDF_DumpFS(NORMAL_DATA), format_=np_to_dotted)
 ddos_ips = get_ips(HDF_FlowExporter(DDOS_DATA), format_=np_to_dotted)
 
-
-OUT_STRING = """tp: %f\t fn: %f\t tn: %f\t fp: %f
-sensitivity: %f\tspecificity: %f
-"""
-data = get_quantitative(ddos_ips, detected_ips, set(normal_ips) | set(ddos_ips))
-print(self.OUT_STRING%data)
+data = get_quantitative(ddos_ips, detected_ips,
+                        set(normal_ips) | set(ddos_ips), show=True)
 
 # ddos_set = set(ddos_ips)
 # detect_set = set(botnet_ips)
@@ -166,3 +162,4 @@ print(self.OUT_STRING%data)
 # P.plot(solution, '*')
 # P.show()
 ########################
+import ipdb;ipdb.set_trace()
