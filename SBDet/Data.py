@@ -74,7 +74,7 @@ class Data(object):
 
 import re
 
-
+# @profile
 def parse_records(f_name, FORMAT, regular_expression):
     flow = []
     with open(f_name, 'r') as fid:
@@ -84,6 +84,7 @@ def parse_records(f_name, FORMAT, regular_expression):
                 break
             if line == '\n':  # Ignore Blank Line
                 continue
+            line = line.strip()
             item = re.split(regular_expression, line)
             f = tuple(h(item[pos]) for k, pos, h in FORMAT)
             flow.append(f)
@@ -348,6 +349,32 @@ class HDF_Merge(PreloadHardDiskFile):
                                  self.table[i]['flow_size'],
                                  self.table[i]['duration'],
                                  ])
+
+
+
+ip_to_int = lambda x: np.uint64(x.replace(".", ""))
+class HDF_tshark(PreloadHardDiskFile):
+    """  Data generated FlowExporter. It is a simple tool to convert pcap to
+    flow data. It is avaliable in tools folder.
+
+    """
+    RE = '\s+'
+    FORMAT = [
+        ('start_time', 1, np.float64),
+        ('src_ip', 2, np.str_),
+        ('dst_ip', 4, np.str_),
+        ('prot', 6, np.str_),
+        ('size', 5, np.float64),
+    ]
+    DT = np.dtype([
+        ('start_time', np.float64),
+        ('src_ip', np.str_, 15),
+        ('dst_ip', np.str_, 15),
+        ('prot', np.str_, 5),
+        ('size', np.float64),
+    ])
+
+
 
 if __name__ == "__main__":
     import doctest

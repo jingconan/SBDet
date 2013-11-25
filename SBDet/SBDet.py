@@ -59,7 +59,7 @@ def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0),
     TGraph = TGraph_map[tp]
 
     ips = TGraph(data).get_vertices()
-    ips = [np_to_dotted(ip) for ip in ips]
+    # ips = [np_to_dotted(ip) for ip in ips]
     try:
         for i in xrange(N):
             progress_bar(i * 1.0 / N * 100)

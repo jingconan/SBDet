@@ -116,7 +116,12 @@ class TrafficGraph(object):
         src_ip = np.array(src_ip, copy=True)  # make buffer continuous
         dst_ip = self.data.get_rows(fields='dst_ip')
         dst_ip = np.array(dst_ip, copy=True)  # make buffer continous
-        self.ips = np_union2d(src_ip, dst_ip)
+        # import ipdb;ipdb.set_trace()
+        # import ipdb;ipdb.set_trace()
+        if isinstance(src_ip[0], str):
+            self.ips = set(src_ip) | set(dst_ip)
+        else:
+            self.ips = np_union2d(src_ip, dst_ip)
         return self.ips
 
     def get_edges(self, records):
@@ -136,7 +141,8 @@ class TrafficGraph(object):
         # get all edges
         tran_sd = []
         for rec in records:
-            tran_sd.append((np_to_dotted(rec[1]), np_to_dotted(rec[2])))
+            # tran_sd.append((np_to_dotted(rec[1]), np_to_dotted(rec[2])))
+            tran_sd.append((rec[1], rec[2]))
         edges = Counter(tran_sd)
         self.edges = edges
         return edges
