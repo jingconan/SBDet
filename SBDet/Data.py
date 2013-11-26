@@ -131,8 +131,8 @@ class PreloadHardDiskFile(Data):
         return parse_records(*argv, **kwargv)
 
     def _init(self):
-        self.fea_vec = self.parse(self.f_name, self.FORMAT, self.RE)
-        self.table = np.array(self.fea_vec, dtype=self.DT)
+        fea_vec = self.parse(self.f_name, self.FORMAT, self.RE)
+        self.table = np.array(fea_vec, dtype=self.DT)
         self.row_num = self.table.shape[0]
 
         self.t = np.array([t for t in self.get_rows('start_time')])
