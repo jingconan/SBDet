@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, division, absolute_import
 import os
+import sys
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -19,8 +20,59 @@ from .Util import DataEndException
 from .Util import igraph
 from .Util import sp, la, stats
 
+def cal_SIG_low_mem(data_file, interval=10.0, dur=10.0, rg=(0.0, float('inf')),
+            directed=False, folder=None):
+    """ Calculate the Social Interaction Graph (SIG)
 
-def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0),
+    Parameters
+    ---------------
+    data_file :
+        flows data file
+    interval, dur : float
+        interval between two windows and the duration of each window
+    rg : tuple (start_time, end_time)
+        Only flows whose timestamps belong to [start_time, end_time) are used.
+    directed : bool
+        if true, the SIG is directed, otherwise it is undirected.
+    folder : str
+        folder name for the output
+
+
+    Returns
+    --------------
+    sigs : list of Graphs with format specified by tp
+
+    """
+    # FIXME directed parameter is useless
+    start_time, end_time = rg
+    if end_time == float('inf'):
+        N = sys.maxint
+    else:
+        N = int((end_time - start_time) // dur)
+
+    TGraph = NetworkXGraph
+    ips = TGraph(data_file).get_vertices()
+    # ips = [np_to_dotted(ip) for ip in ips]
+    dump(ips, folder + 'nodes.pk')
+    try:
+        for i in xrange(N):
+            print('i', i)
+            if N != sys.maxint: progress_bar(i * 1.0 / N * 100)
+            else: progress_bar(i * 1.0)
+            tg = TGraph(data_file)
+            tg.add_vertices(ips)
+            records = tg.filter(prot=None,
+                                rg=[start_time + i * interval, start_time + i * interval + dur],
+                                rg_type='time')
+            edges = tg.get_edges(records)
+            tg.add_edges(edges)
+            dump({'edges': edges}, '%s%i.pk' % (folder, i))
+            # import ipdb;ipdb.set_trace()
+    except DataEndException:
+        print('reach end')
+
+
+def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, float('inf')),
             directed=False, tp='igraph'):
     """ Calculate the Social Interaction Graph (SIG)
 
@@ -43,7 +95,10 @@ def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0),
 
     """
     start_time, end_time = rg
-    N = int((end_time - start_time) // dur)
+    if end_time == float('inf'):
+        N = sys.maxint
+    else:
+        N = int((end_time - start_time) // dur)
 
     sigs = []
     if isinstance(data_file, str):
@@ -69,8 +124,7 @@ def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, 3000.0),
                                 rg=[start_time + i * interval, start_time + i * interval + dur],
                                 rg_type='time')
             edges = tg.get_edges(records)
-            tg.add_edges(edges)
-
+            # tg.add_edges(edges)
             sigs.append(tg.graph)
     except DataEndException:
         print('reach end')
