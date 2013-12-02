@@ -17,7 +17,12 @@ cdef extern from "stdio.h":
     # int sscanf   (const_char *S, const_char *TEMPLATE, ...)
     # int printf   (const_char *TEMPLATE, ...)
 
-DEF MAX_ROW = 108676
+cdef extern from "string.h":
+    int strcmp(char* str1, char* str2)
+
+# DEF MAX_ROW = 108676
+# DEF MAX_ROW = 168676
+DEF MAX_ROW = 26760676
 
 # def c_parse_records_fs(const_char *f_name):
 #     cdef int node_id
@@ -103,23 +108,30 @@ def c_parse_records_tshark(char *f_name):
     i = -1
     while True:
         i += 1
-        if i > MAX_ROW:
+        if i > MAX_ROW-1:
             raise Exception("MAX_ROW too SMALL! Please increase MAX_ROW in "
                             "CythonUtil.pyx")
 
         value = fscanf(cfile, '%s %lf %s -> %s',
                 seq, &time, src_ip, dst_ip)
+        # printf('%s %lf %s -> %s\n', seq, time, src_ip, dst_ip)
         if value == EOF:
             break
 
-        fseek(cfile, 2, SEEK_CUR)
-        tmp = fgetc(cfile)
-        if tmp == ' ':
-            value += fscanf(cfile, '%lf %s\n', &sz, prot)
+        # fseek(cfile, 2, SEEK_CUR)
+        # tmp = fgetc(cfile)
+        value += fscanf(cfile, '%s', prot)
+        # printf('@ %s\n', prot)
+            # printf('*> %ld %ld %lf %s\n', src_port, dst_port, sz, prot)
+        if strcmp(prot, 'ICMP') == 0:
+            value += fscanf(cfile, '%lf \n', &sz)
+            # printf('-> %lf %s\n', sz, prot)
+        # else strcmp(prot, 'TCP') == 0 or strcmp(prot, 'DNS') == 0:
         else:
-            fseek(cfile, -2, SEEK_CUR)
-            value += fscanf(cfile, '%ld %ld %lf %s\n', &src_port, &dst_port, &sz, prot)
-            # printf('%ld\n%ld\n%lf\n%s\n', src_port, dst_port, sz, prot)
+            value += fscanf(cfile, '%lf %ld %ld\n', &sz, &src_port, &dst_port)
+        # else:
+        #     raise Exception(prot)
+
             # print('time', time)
             # printf('%s\n%s\n%s\n%s\n', prot2, prot3, prot4, prot)
 
