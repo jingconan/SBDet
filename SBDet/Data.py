@@ -72,6 +72,7 @@ class Data(object):
         """
         abstract_method()
 
+
 import re
 
 # @profile
@@ -92,6 +93,10 @@ def parse_records(f_name, FORMAT, regular_expression):
 
 IP = lambda x:tuple(np.uint8(v) for v in x.rsplit('.'))
 
+import pyximport; pyximport.install()
+import numpy as np
+from CythonUtil import c_parse_records_tshark
+# from CythonUtil import c_parse_records_fs
 
 class PreloadHardDiskFile(Data):
     """ abstract base class for hard disk file The flow file into memory as a
@@ -126,14 +131,13 @@ class PreloadHardDiskFile(Data):
         self.f_name = f_name
         self._init()
 
-    @staticmethod
-    def parse(*argv, **kwargv):
-        return parse_records(*argv, **kwargv)
-
-    def _init(self):
-        fea_vec = self.parse(self.f_name, self.FORMAT, self.RE)
+    def parse(self):
+        fea_vec = parse_records(self.f_name, self.FORMAT, self.RE)
         self.table = np.array(fea_vec, dtype=self.DT)
         self.row_num = self.table.shape[0]
+
+    def _init(self):
+        self.parse()
 
         self.t = np.array([t for t in self.get_rows('start_time')])
         t_idx = np.argsort(self.t)
@@ -236,6 +240,15 @@ class HDF_FS(PreloadHardDiskFile):
         ('flow_size', np.float64, 1),
         ('duration', np.float64, 1),
     ])
+
+    # def parse(self):
+    #     try: # try optimized parse method written in cython first
+    #         self.table, self.row_num = c_parse_records_fs(self.f_name)
+    #     except Exception as e:
+    #         print('-' * 30)
+    #         print(e)
+    #         print('-' * 30)
+    #         super(HDF_FS, self).parse()
 
 
 class HDF_FlowExporter(PreloadHardDiskFile):
@@ -374,6 +387,8 @@ class HDF_tshark(PreloadHardDiskFile):
         ('size', np.float64),
     ])
 
+    def parse(self):
+        self.table, self.row_num = c_parse_records_tshark(self.f_name)
 
 
 if __name__ == "__main__":
