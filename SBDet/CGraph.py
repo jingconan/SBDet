@@ -124,6 +124,7 @@ class TrafficGraph(object):
             self.ips = np_union2d(src_ip, dst_ip)
         return self.ips
 
+    # @profile
     def get_edges(self, records):
         """  get edge from flow records. There will be link from (i, j) if there is
         record from node i to node j.
@@ -138,11 +139,13 @@ class TrafficGraph(object):
         edges : a list of tuple
             each tuple is (src_id, dst_id)
         """
+        tran_sd = zip(records['src_ip'], records['dst_ip'])
         # get all edges
-        tran_sd = []
-        for rec in records:
+        # import ipdb;ipdb.set_trace()
+        # tran_sd = []
+        # for rec in records:
             # tran_sd.append((np_to_dotted(rec[1]), np_to_dotted(rec[2])))
-            tran_sd.append((rec[1], rec[2]))
+            # tran_sd.append((rec[1], rec[2]))
         edges = Counter(tran_sd)
         self.edges = edges
         return edges
