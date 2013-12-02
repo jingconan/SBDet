@@ -376,8 +376,8 @@ class HDF_tshark(PreloadHardDiskFile):
         ('start_time', 1, np.float64),
         ('src_ip', 2, np.str_),
         ('dst_ip', 4, np.str_),
-        ('prot', 6, np.str_),
-        ('size', 5, np.float64),
+        ('prot', 5, np.str_),
+        ('size', 6, np.float64),
     ]
     DT = np.dtype([
         ('start_time', np.float64),
