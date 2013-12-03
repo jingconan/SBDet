@@ -484,7 +484,10 @@ def log_fact(n):
 def log_fact_mat(n):
     nm = np.max(n)
     if nm > 254:
-        raise Exception()
+        nv = n[n>254]
+        n[n>254] = (nv - 0.5)*np.log(nv) - nv + 0.5*np.log(2*np.pi) + 1.0/(12.0*nv);
+        nm = 254
+
     for i in xrange(int(nm)+1):
         n[n==i] = lf[i]
     return n
