@@ -44,7 +44,7 @@ def cal_SIG_low_mem(data_file, interval=10.0, dur=10.0,
     dump(ips, folder + 'nodes.pk')
     try:
         for i in xrange(N):
-            sys.stdout.write("[%d]" % i)
+            sys.stdout.write("\r[%d]" % i)
             sys.stdout.flush()
 
             tg = NetworkXGraph(data_file)
@@ -58,7 +58,6 @@ def cal_SIG_low_mem(data_file, interval=10.0, dur=10.0,
         print('reach end')
 
     sys.stdout.write('\n')
-
 
 
 def pack_sigs(folder, out):
@@ -81,6 +80,15 @@ def pack_sigs(folder, out):
     dump({'nodes': nodes, 'sig_edges': sigs}, out)
     sys.stdout.write('\n')
 
+
+def to_sigs(data, out_folder, dur):
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
+    cal_SIG_low_mem(data,
+                    interval=dur,
+                    dur=dur,
+                    folder=out_folder)
+    pack_sigs(out_folder, out_folder+'sigs.pk')
 
 
 def cal_SIG(data_file, interval=10.0, dur=10.0, rg=(0.0, float('inf')),
