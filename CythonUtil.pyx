@@ -22,7 +22,8 @@ cdef extern from "string.h":
 
 # DEF MAX_ROW = 108676
 # DEF MAX_ROW = 168676
-DEF MAX_ROW = 26760676
+# DEF MAX_ROW = 26760676
+DEF MAX_ROW = 16829836
 
 # def c_parse_records_fs(const_char *f_name):
 #     cdef int node_id
@@ -94,6 +95,7 @@ def c_parse_records_tshark(char *f_name):
     cdef int value = 0
     cdef long src_port, dst_port
     cdef char tmp = 'c'
+    cdef char[200] line
 
     cdef np.ndarray flows = np.ndarray((MAX_ROW,), dtype= np.dtype([
         ('start_time', np.float64),
@@ -112,7 +114,7 @@ def c_parse_records_tshark(char *f_name):
             raise Exception("MAX_ROW too SMALL! Please increase MAX_ROW in "
                             "CythonUtil.pyx")
 
-        value = fscanf(cfile, '%s %lf %s -> %s',
+        value = fscanf(cfile, '%s %lf %s -> %s ',
                 seq, &time, src_ip, dst_ip)
         # printf('%s %lf %s -> %s\n', seq, time, src_ip, dst_ip)
         if value == EOF:
@@ -123,12 +125,28 @@ def c_parse_records_tshark(char *f_name):
         value += fscanf(cfile, '%s', prot)
         # printf('@ %s\n', prot)
             # printf('*> %ld %ld %lf %s\n', src_port, dst_port, sz, prot)
-        if strcmp(prot, 'ICMP') == 0:
+        if strcmp(prot, 'ICMP') == 0 or strcmp(prot, 'GRE') == 0 \
+                or strcmp(prot, 'IPv4') == 0 or strcmp(prot, 'ESP') == 0 or \
+                strcmp(prot, 'IPv6') == 0:
             value += fscanf(cfile, '%lf \n', &sz)
+            # printf('run here\n')
             # printf('-> %lf %s\n', sz, prot)
-        # else strcmp(prot, 'TCP') == 0 or strcmp(prot, 'DNS') == 0:
-        else:
+        elif strcmp(prot, 'BFD') == 0 or strcmp(prot, 'Vines') == 0:
+            printf('run BFD\n')
+            fscanf(cfile, '%s', &prot[3])
             value += fscanf(cfile, '%lf %ld %ld\n', &sz, &src_port, &dst_port)
+        elif strcmp(prot, 'TCP') == 0 or strcmp(prot, 'UDP') == 0 or \
+                strcmp(prot, 'DNS') == 0 or strcmp(prot, 'Syslog') == 0 or \
+                strcmp(prot, 'ADP') == 0 or strcmp(prot, 'UDPENCAP') == 0 or \
+                strcmp(prot, 'NTP') == 0 or strcmp(prot, 'QUAKE3') == 0 or \
+                strcmp(prot, 'eDonkey') == 0:
+             value += fscanf(cfile, '%lf %ld %ld\n', &sz, &src_port, &dst_port)
+        else:
+            fgets (line, sizeof(line), cfile);
+            printf('[ignore line]: %s %lf %s -> %s %s %s', 
+                    seq, time, src_ip, dst_ip, prot, line)
+            i -= 1
+            continue
         # else:
         #     raise Exception(prot)
 
@@ -137,6 +155,8 @@ def c_parse_records_tshark(char *f_name):
 
 
         if value != 6 and value != 8:
+            printf('%s %lf %s -> %s\n', seq, time, src_ip, dst_ip)
+
             raise Exception("value = " + str(value))
         else:
             value = 0
