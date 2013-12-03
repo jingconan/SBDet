@@ -170,10 +170,10 @@ class Igraph(TrafficGraph):
     def add_edges(self, edges):
         if len(edges) == 0:
             return
-        self.i_edges, self.weights = zip(*edges.items())
-        self.i_edges = list(self.i_edges)
+        i_edges, self.weights = zip(*edges.items())
+        i_edges = list(i_edges)
         self.weights = list(self.weights)
-        self.graph.add_edges(self.i_edges)
+        self.graph.add_edges(i_edges)
 
     def gen_layout(self):
         return self.graph.layout("circular")
