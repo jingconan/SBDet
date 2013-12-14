@@ -1,3 +1,5 @@
+"""  Model Selection Related Functions
+"""
 from __future__ import print_function, division, absolute_import
 from .Util import log_fact_mat, warning
 # from SBDet import *
