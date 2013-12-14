@@ -34,7 +34,7 @@ def com_det(A, r_vec, w, lamb, out):
 
 
 def com_det_reg(A, r_vec, w1, w2, lamb, out):
-    """ Community Detection using Revised Modularity Maximization Method
+    """ Modularity-based community detection with regularizatoin term
 
     The problem is defined as:
         M = (0.5 / m) A - (0.5 / m^2) deg * deg'
