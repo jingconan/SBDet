@@ -532,8 +532,25 @@ def warning(msg):
 """
 
 
-def roc(data):
-    tpv, fnv, tnv, fpv, _, _ = data
+def roc(trace):
+    """  Calculate points of ROC curve given trace data
+
+    Parameters
+    ---------------
+    trace : tuple of 6 lists
+        each list are observation of
+            tuple positive num
+            false negative num
+            true negative num
+            false positive num
+    Returns
+    --------------
+    fpr : list of float
+        false positive rate
+    tpr : list of float
+        true positive rate
+    """
+    tpv, fnv, tnv, fpv, _, _ = trace
     tpr = [tp * 1.0 / (tp + fn) for tp, fn in zip(tpv, fnv)]
     # calculate the false positive rate
     fpr = [fp * 1.0 / (fp + tn) for fp, tn in zip(fpv, tnv)]
@@ -543,9 +560,28 @@ def roc(data):
 
 
 def get_quantitative(A, B, W, show=True):
-    """**A** is the referece, and **B** is the detected result, **W** is the
-    whole set calculate the true positive, false negative, true negative and
-    false positive
+    """
+    """
+    """
+
+    Parameters
+    ---------------
+    A, B, W : set
+        **A** is the referece, and **B** is the detected result, **W** is the
+        whole set calculate the true positive, false negative, true negative
+        and false positive
+    show : bool
+        when to print the results out.
+
+    Returns
+    --------------
+    ret : 6-element tuple
+        - true positive num,
+        - false negative num,
+        - true negative num,
+        - false positive num,
+        - false positive rate
+        - true positive rante
     """
     A = set(A)
     B = set(B)
