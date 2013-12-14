@@ -95,7 +95,7 @@ IP = lambda x:tuple(np.uint8(v) for v in x.rsplit('.'))
 
 import pyximport; pyximport.install()
 import numpy as np
-from CythonUtil import c_parse_records_tshark
+from .CythonUtil import c_parse_records_tshark
 # from CythonUtil import c_parse_records_fs
 
 class PreloadHardDiskFile(Data):
