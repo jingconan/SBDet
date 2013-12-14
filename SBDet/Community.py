@@ -5,6 +5,7 @@ from __future__ import print_function, division, absolute_import
 import sys
 from .Util import np, sp
 
+
 def com_det(A, r_vec, w, lamb, out):
     """ Community Detection using Revised Modularity Maximization Method
 
@@ -87,7 +88,6 @@ def com_det_reg(A, r_vec, w1, w2, lamb, out):
 #                   np.hstack([0.5 * qv.T, zerov])])
 #     max_cut(W, out)
 #     return P0, q0, W
-
 
 
 def max_cut(W, out):
@@ -187,7 +187,8 @@ def parse_SDPA_sol(f_name, n):
 # def randomization_old(S, W):
 #     n = S.shape[0]
 #     sn = 5000
-#     sample = np.random.multivariate_normal(np.zeros((n,)), S.todense(), (sn,))
+#     sample = np.random.multivariate_normal(np.zeros((n,)), S.todense(),
+#     (sn,))
 #     val = np.zeros((sn,))
 #     for i in xrange(sn):
 #         fea_sol = np.sign(sample[i, :])
@@ -288,6 +289,7 @@ def cal_inta_pnodes(adjs, weights, pivot_nodes):
     inta = np.dot(inta_mat, weights)
     return inta
 
+
 def cal_cor_graph(adjs, pivot_nodes, thres):
     """  calculate the correlation graph
 
@@ -307,12 +309,10 @@ def cal_cor_graph(adjs, pivot_nodes, thres):
     npcor : np.2darray
         matrix of correlation coefficients.
     """
-    inta = lambda x: np.sum(np.array(adj[pivot_nodes, :].todense()), axis=0).reshape(-1)
+    inta = lambda x: np.sum(np.array(adj[pivot_nodes, :].todense()),
+                            axis=0).reshape(-1)
     traf = np.asarray([inta(adj) for adj in adjs])
     npcor = np.corrcoef(traf, rowvar=0)
     np_cor_no_nan = np.nan_to_num(npcor)
     A = np_cor_no_nan > thres
     return A, npcor
-
-
-
