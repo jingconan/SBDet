@@ -261,58 +261,6 @@ def verify_ERGM(normal_sigs, tp, beta_values):
     return [deviation(b) for b in beta_values]
 
 
-###################################################
-### Statistics
-###################################################
-
-def roc(data):
-    tpv, fnv, tnv, fpv, _, _ = data
-    tpr = [tp * 1.0 / (tp + fn) for tp, fn in zip(tpv, fnv)]
-    # calculate the false positive rate
-    fpr = [fp * 1.0 / (fp + tn) for fp, tn in zip(fpv, tnv)]
-    print('fpr, ', fpr)
-    print('tpr, ', tpr)
-    return fpr, tpr
-
-
-def get_quantitative(A, B, W, show=True):
-    """**A** is the referece, and **B** is the detected result, **W** is the
-    whole set calculate the true positive, false negative, true negative and
-    false positive
-    """
-    A = set(A)
-    B = set(B)
-    W = set(W)
-    # no of true positive, no of elements belongs to B and also belongs to A
-    tp = len(set.intersection(A, B))
-
-    # no of false negative no of elements belongs to A but doesn't belong to B
-    fn = len(A - B)
-
-    # no of true negative, no of element not belongs to A and not belong to B
-    tn = len(W - set.union(A, B))
-    # no of false positive. no of ele. not belongs to A but belongs to B
-    fp = len(B - A)
-
-    # sensitivity is the probability of a alarm given that the this flow is
-    # anormalous
-    # sensitivity = tp * 1.0 / (tp + fn)
-    # specificity is the probability of there isn't alarm given that the flow
-    # is normal
-    # specificity = tn * 1.0 / (tn + fp)
-
-    tpr = tp * 1.0 / (tp + fn)
-    fpr = fp * 1.0 / (fp + tn)
-
-    # ret = tp, fn, tn, fp, sensitivity, specificity
-    ret = tp, fn, tn, fp, fpr, tpr
-    if show:
-        OUT_STRING = """tp: %f\t fn: %f\t tn: %f\t fp: %f
-        fpr: %f\ttpr: %f
-        """
-        print(OUT_STRING % ret)
-    return ret
-
 
 
 
