@@ -290,6 +290,20 @@ def cal_inta_pnodes(adjs, weights, pivot_nodes):
     return inta
 
 
+# def cal_cor(sigs, pivot_nodes):
+#     """  calculate the correlation of each node's interaction with pivot
+#     nodes
+#     """
+#     ips = sigs[0].get_vertices()
+#     victim_index = np_index(ips, pivot_nodes)
+#     adj_mats = []
+#     for i, tg in enumerate(sigs):
+#         am = np.array(nx.adj_matrix(tg.graph), copy=True)
+#         adj_mats.append(am[:, victim_index].reshape(-1))
+
+#     npcor = np.corrcoef(adj_mats, rowvar=0)
+#     return npcor
+
 def cal_cor_graph(adjs, pivot_nodes, thres):
     """  calculate the correlation graph
 

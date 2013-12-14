@@ -8,9 +8,10 @@ import scipy as sp
 import networkx as nx
 import random
 
+
 def sample(nodes, edges, k):
-    """  Sample degrees of k nodes in a Undirected Graph with **node** as node set and
-    **edges** as edge set
+    """  Sample degrees of k nodes in a Undirected Graph with **node** as node
+    set and **edges** as edge set
 
     Parameters
     ---------------
@@ -30,9 +31,10 @@ def sample(nodes, edges, k):
     g.add_edges_from(edges)
     return list(g.degree(random.sample(node_ids, k)).values())
 
+
 def mg_sample(nodes, sig_edges, n, k):
-    """ Multi-Graph Sample. Sample degree values from a sequence of Social Interaction Graphs
-    (SIGs)
+    """ Multi-Graph Sample. Sample degree values from a sequence of Social
+    Interaction Graphs (SIGs)
 
     Parameters
     ---------------
@@ -63,6 +65,7 @@ def mg_sample(nodes, sig_edges, n, k):
 
     return s_v
 
+
 def _ER_MLE(deg_sample):
     """  Maximium log likelihood estimator for ER model
 
@@ -83,7 +86,7 @@ def _ER_MLE(deg_sample):
     th_hat = np.sum(deg_sample) * 1.0 / n
     # pm = th_hat * np.ones(ds)
     lk = np.log(th_hat) * np.sum(deg_sample) - th_hat * n - \
-            np.sum(log_fact_mat(deg_sample))
+        np.sum(log_fact_mat(deg_sample))
     return th_hat, lk
 
 
@@ -93,11 +96,13 @@ def zeta(x, N=100):
     KX = np.power(K, -X)
     return np.sum(KX, axis=1)
 
+
 def phi(x, N=100):
     k = np.arange(1, N)
     K, X = np.meshgrid(k, x)
     KX = np.power(K, -X)
     return -1 * np.sum(np.log(K) * KX, axis=1) / np.sum(KX, axis=1)
+
 
 def _BA_MLE(deg_sample):
     # ds = deg_sample.shape
@@ -110,14 +115,24 @@ def _BA_MLE(deg_sample):
     sl_nz_deg = np.sum(np.log(nz_deg))
     level = -1 * sl_nz_deg * 1.0 / n
     print('level', level)
-    th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level , x0=3)
+    th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level, x0=3)
     lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
     return th_hat, lk
 
+
 def mle(deg_sample, model):
     model_dict = {
-            "BA": _BA_MLE,
-            "ER": _ER_MLE,
-            }
+        "BA": _BA_MLE,
+        "ER": _ER_MLE,
+    }
     return model_dict[model](deg_sample)
 
+
+# def verify_ERGM(normal_sigs, tp, beta_values):
+#     normal_dds = (degree_distribution(G, tp) for G in normal_sigs)
+#     normal_dd = reduce(lambda x,y: x + y, normal_dds)
+#     deg, freq = zip(*normal_dd.iteritems())
+#     freq = np.array(freq, dtype=float)
+#     freq /= (np.sum(freq) * 1.0)
+#     deviation = lambda x: I1(freq, stats.poisson.pmf(deg, x))
+#     return [deviation(b) for b in beta_values]

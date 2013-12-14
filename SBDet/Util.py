@@ -191,27 +191,27 @@ def progress_bar(i):
     sys.stdout.flush()
 
 
-def np_index(A, B):
-    """  index function of np.array
+# def np_index(A, B):
+#     """  index function of np.array
 
-    Parameters
-    ---------------
-    A : np.2darray
-        set of elements
-    B : np.array
-        one element of the form of numpy array
-    Returns
-    --------------
-    C : np.array
-        the row number of A which equals to B.
-    """
-    nrows, ncols = A.shape
-    dtype = {
-        'names': ['f{}'.format(i) for i in range(ncols)],
-        'formats': ncols * [A.dtype]
-    }
-    C = np.where(A.view(dtype) == B.view(dtype))
-    return C[0]
+#     Parameters
+#     ---------------
+#     A : np.2darray
+#         set of elements
+#     B : np.array
+#         one element of the form of numpy array
+#     Returns
+#     --------------
+#     C : np.array
+#         the row number of A which equals to B.
+#     """
+#     nrows, ncols = A.shape
+#     dtype = {
+#         'names': ['f{}'.format(i) for i in range(ncols)],
+#         'formats': ncols * [A.dtype]
+#     }
+#     C = np.where(A.view(dtype) == B.view(dtype))
+#     return C[0]
 
 
 def np_to_dotted(ip):
