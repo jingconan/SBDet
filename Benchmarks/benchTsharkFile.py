@@ -5,10 +5,11 @@ from SBDet.Data import HDF_FS, HDF_tshark
 
 
 def main():
-    for i in xrange(10):
-        print('i', i)
+    for i in xrange(10000):
+        if i % 100 == 0:
+            print("i: %i" % (i))
         # HDF_FS('./n0_flow.txt')
-        HDF_tshark('../ddostrace.20070804_135436_tshark.txt')
+        HDF_tshark("dosattack_tshark.txt")
     print('done')
     pass
 
