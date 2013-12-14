@@ -238,3 +238,81 @@ def randomization(S, P0, q0, sn=5000):
     best_one = np.argmax(val)
     print('the best sampled solution is :', val[best_one])
     return np.sign(sample[best_one, :])
+
+
+def ident_pivot_nodes(adjs, weights, thres):
+    """ identify the pivot nodes
+
+    Parameters
+    ---------------
+    adjs : a list of sparse matrices.
+        SIG. Assume to be symmetric
+    weights : a list of float
+        weights of each SIG
+
+    Returns
+    --------------
+    """
+    N = adjs[0].shape[0]
+    T = len(weights)
+    total_inta_mat = np.zeros((N, T))
+    for t, adj in enumerate(adjs):
+        total_inta_mat[:, t] = adj.sum(axis=1).reshape(-1)
+    total_inta_mat = np.dot(total_inta_mat, weights)
+    total_inta_mat /= np.max(total_inta_mat)
+    pivot_nodes, = np.where(total_inta_mat > thres)
+    return pivot_nodes
+
+
+def cal_inta_pnodes(adjs, weights, pivot_nodes):
+    """  calculate the interactions of nodes with pivot_nodes using GCM
+
+    Parameters
+    ---------------
+    adjs : a list of sparse matrices.
+        SIG. Assume to be symmetric
+    weights : a list of float
+        weights of each SIG
+    pivot_nodes : list of ints
+        a set of nodes that may be leaders or the victims of the botnet
+
+    Returns
+    --------------
+    """
+    N = adjs[0].shape[0]
+    T = len(weights)
+    inta_mat = np.zeros((N, T))
+    for t, adj in enumerate(adjs):
+        res = np.sum(adj[list(pivot_nodes), :].todense(), axis=0).reshape(-1)
+        inta_mat[:, t] = res
+    inta = np.dot(inta_mat, weights)
+    return inta
+
+def cal_cor_graph(adjs, pivot_nodes, thres):
+    """  calculate the correlation graph
+
+    Parameters
+    ---------------
+    adjs : a list of sparse matrices.
+        SIG. Assume to be symmetric
+    pivot_nodes : list of ints
+        a set of nodes that may be leaders or the victims of the botnet
+    thres : float
+        threshold for constructing correlation graph
+
+    Returns
+    --------------
+    A : np.2darray
+        adj matrix of the correlation graph
+    npcor : np.2darray
+        matrix of correlation coefficients.
+    """
+    inta = lambda x: np.sum(np.array(adj[pivot_nodes, :].todense()), axis=0).reshape(-1)
+    traf = np.asarray([inta(adj) for adj in adjs])
+    npcor = np.corrcoef(traf, rowvar=0)
+    np_cor_no_nan = np.nan_to_num(npcor)
+    A = np_cor_no_nan > thres
+    return A, npcor
+
+
+
