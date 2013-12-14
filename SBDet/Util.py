@@ -1,3 +1,4 @@
+from __future__ import print_function, division, absolute_import
 def abstract_method():
     """ This should be called when an abstract method is called that should have been
     implemented by a subclass. It should not be called in situations where no implementation
@@ -518,3 +519,6 @@ def log_fact_mat(n):
         n[n==i] = lf[i]
     return n
 
+
+def warning(msg):
+    print("warning: ", msg)

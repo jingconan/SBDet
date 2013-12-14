@@ -1,5 +1,5 @@
-from __future__ import print_function, division
-from Util import log_fact_mat
+from __future__ import print_function, division, absolute_import
+from .Util import log_fact_mat, warning
 # from SBDet import *
 import numpy as np
 import scipy as sp
@@ -76,7 +76,6 @@ def _ER_MLE(deg_sample):
     lk : float
         loglikelihood value.
     """
-    print('run here')
     ds = deg_sample.shape
     n = ds[0] * ds[1]
     th_hat = np.sum(deg_sample) * 1.0 / n
@@ -102,9 +101,13 @@ def _BA_MLE(deg_sample):
     # ds = deg_sample.shape
     nz_deg = deg_sample[deg_sample >= 1]
     n = len(nz_deg)
+    if (np.max(nz_deg) <= 1):
+        warning("no degree value > 1; unlikely to be BA model")
+        return np.nan, -np.inf
 
     sl_nz_deg = np.sum(np.log(nz_deg))
     level = -1 * sl_nz_deg * 1.0 / n
+    print('level', level)
     th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level , x0=3)
     lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
     return th_hat, lk

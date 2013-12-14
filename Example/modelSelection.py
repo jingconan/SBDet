@@ -85,7 +85,7 @@ def select_simple_pkt():
         print('dur', dur)
         f_name = ROOT+'sigs1/loc6-%i/sigs.pk' % (dur)
         sigs = load(f_name)
-        s_v = mg_sample(n=min([4, len(sigs['sig_edges'])]), k=200, **sigs)
+        s_v = mg_sample(n=min([4, len(sigs['sig_edges'])]), k=400, **sigs)
         alpha, lka = mle(s_v, 'BA')
         beta, lkb = mle(s_v, 'ER')
         tr['dur'].append(dur)
