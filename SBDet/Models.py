@@ -1,7 +1,7 @@
 """  Model Selection Related Functions
 """
 from __future__ import print_function, division, absolute_import
-from .Util import log_fact_mat, warning
+from .Util import log_fact_mat, warning, degree
 # from SBDet import *
 import numpy as np
 import scipy as sp
@@ -82,7 +82,7 @@ def _ER_MLE(deg_sample):
         loglikelihood value.
     """
     ds = deg_sample.shape
-    n = ds[0] * ds[1]
+    n = np.prod(ds)
     th_hat = np.sum(deg_sample) * 1.0 / n
     # pm = th_hat * np.ones(ds)
     lk = np.log(th_hat) * np.sum(deg_sample) - th_hat * n - \
@@ -147,8 +147,8 @@ MODEL_LIST = ["BA", "ER"]
 
 
 def select_model(sigs):
-    degrees = np.concatenate([np.array(sig.sum(axis=0)) for sig in sigs],
-            axis=0)
+    # degrees = np.concatenate([np.array(sig.sum(axis=0)) for sig in sigs],
+    degrees = np.concatenate([degree(sig) for sig in sigs], axis=0)
 
     para_list = []
     lk_list = []

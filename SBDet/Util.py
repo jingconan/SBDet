@@ -615,3 +615,7 @@ def get_quantitative(A, B, W, show=True):
         """
         print(OUT_STRING % ret)
     return ret
+
+
+def degree(G):
+    return np.array(G.sum(axis=0), dtype=int).ravel()
