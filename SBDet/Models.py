@@ -121,11 +121,43 @@ def _BA_MLE(deg_sample):
 
 
 def mle(deg_sample, model):
+    """  Maximum Loglikelihood Estimator.
+
+    Parameters
+    ---------------
+    deg_sample :
+    model : str, {"BA", "ER"}
+        type of estimator
+
+    Returns
+    --------------
+    para : int or list
+        estimated parameters
+    lk : float
+        log likelihood value
+    """
     model_dict = {
         "BA": _BA_MLE,
         "ER": _ER_MLE,
     }
     return model_dict[model](deg_sample)
+
+
+MODEL_LIST = ["BA", "ER"]
+
+
+def select_model(sigs):
+    degrees = np.concatenate((sig.sum(axis=0).todense() for sig in sigs), axis=0)  # XXX check
+
+    para_list = []
+    lk_list = []
+    for model in MODEL_LIST:
+        para, lk = mle(degrees, model)
+        para_list.append(para)
+        lk_list.append(lk)
+
+    pos = np.argmax(lk)
+    return MODEL_LIST[pos], para_list[pos]
 
 
 # def verify_ERGM(normal_sigs, tp, beta_values):
