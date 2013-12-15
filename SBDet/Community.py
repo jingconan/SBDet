@@ -3,6 +3,7 @@
 """
 from __future__ import print_function, division, absolute_import
 import sys
+from subprocess import check_call
 from .Util import np, sp
 
 
@@ -250,6 +251,9 @@ def ident_pivot_nodes(adjs, weights, thres):
         SIG. Assume to be symmetric
     weights : a list of float
         weights of each SIG
+    thres : float
+        a node is 'pivot' if its normalized interactions with other nodes >
+        **thres**
 
     Returns
     --------------
@@ -330,3 +334,50 @@ def cal_cor_graph(adjs, pivot_nodes, thres):
     np_cor_no_nan = np.nan_to_num(npcor)
     A = np_cor_no_nan > thres
     return A, npcor
+
+
+def detect_botnet(sigs, pivot_th, cor_th, w1, w2, lamb):
+    """  Detect botnets from a set of suspicious SIGs
+
+    Parameters
+    ---------------
+    sigs: list of scipy sparse matrix
+        adj matrices of SIGs constructed from the traffic
+
+    w1, w2 : float
+        - *w1* is the weight for interactions.
+        - *w2* is the weight for size of detected botnet. Increase w2 will
+          reduce the size.
+
+    lamb : float
+        weight for auxilary term that make object convex.
+
+    Returns
+    --------------
+    botnet : list of ints
+        list of the ids of the nodes that belongs to a botnet.
+    """
+    #### Identify the Pivot Nodes ######
+    node_num = sigs[0].shape[0]
+    weights = np.ones((node_num, )) / node_num  # equal weights
+    p_nodes = ident_pivot_nodes(sigs, weights, pivot_th)
+
+    #### Calculate interactions of nodes with pivot nodes ####
+    inta = cal_inta_pnodes(sigs, weights, p_nodes)
+
+    #### Calculate the correlation graph ####
+    A, npcor = cal_cor_graph(sigs, p_nodes, cor_th)
+
+    P0, q0, W = com_det_reg(A, inta, w1, w2, lamb, out='./prob.sdpb')
+    check_call('./csdp6.1.0linuxp4/bin/csdp', 'prob.sdpb', 'botnet.sol')
+
+    node_num = len(inta)
+    Z, X = parse_CSDP_sol('botnet.sol', node_num + 1)
+    solution = randomization(X, P0, q0)
+    inta_diff = np.dot(inta, solution)
+    print('inta_diff', inta_diff)
+
+    botnet, = np.nonzero(solution > 0)
+    print('[%i] ips out of [%i] ips are detected as bots' %
+          (len(botnet), node_num))
+    return botnet
