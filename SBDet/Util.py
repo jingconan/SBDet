@@ -105,7 +105,7 @@ def log(*args):
     print('[%f s]: --> %s' % (time.time() - globals()['START_TIME'], msg))
 
 
-def adjust_pv(prob, eps):
+def adjust_pv_slow(prob, eps):
     """ adjust probability vector so that each value >= eps
 
     Parameters
@@ -141,6 +141,20 @@ def adjust_pv(prob, eps):
         print('[warning] EPS is too large in adjust_pv')
         # return adjust_pv(prob2, eps / 2.0)
     return prob2
+
+
+def adjust_pv(prob, eps):
+    """ adjust_pv using numpy. It will change input parameter **prob**
+
+    See Also
+    --------------
+    adjust_pv_slow
+
+    """
+    prob[prob == 0] = eps
+    prob /= np.sum(prob)
+    return prob
+
 
 
 EPS = 1e-20

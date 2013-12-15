@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 # from .Util import I1, adjust_pv
-from .Util import adjust_pv
+from .Util import adjust_pv, degree
 import numpy as np
 # from collections import Counter
 # import networkx as nx
@@ -73,7 +73,7 @@ def cal_mean_deg(dd):
 #         raise Exception("Unknown type of graph")
 
 
-def _I_BA(dd, alpha):
+def _I_BA(dd, alpha, eps):
     """  Rate Function for BA Model
 
     Parameters
@@ -84,17 +84,38 @@ def _I_BA(dd, alpha):
         parameter of BA model. Every new node is attached existin
         node. The probability of an existing node i be attached is proportional
         to d_i + alpha, where d_i is the degree of node i.
+    eps : float
+        we will adjust the degre distribution so that
+            min(dd) >= eps
 
     Returns
     --------------
     res : float
         rate value of distribution *dd* for BA model with parameter *alpha*
+
+        Rate function is defined as
+        I = sum((1 - [dd]_i) log ((1-[dd]_i) / (i+1) (dd_i / 2))) + \
+                (1 - sum(i dd_i)) log2
+
+    See Also
+    -----------
+        Choi, J., & Sethuraman, S. (2011). Large deviations in preferential
+        attachment schemes.Choi, J., & Sethuraman, S. (2011). Large deviations
+        in preferential attachment schemes.
     """
+    #ignore the zero degrees
+    dd = dd[1:]
+    dd /= np.sum(dd)
+    dd = adjust_pv(dd, eps)  # min(dd) >= eps
+
     d = len(dd)
     cgamma = np.cumsum(dd)
     crit = np.sum(1 - cgamma)
     assert(abs(np.sum(dd) - 1.0) < 1e-3)
-    assert(crit <= 1)
+    if crit > 1:
+        print("[warning]: invalid degree distribution, "
+              "you may need to descrese eps")
+        return -np.inf  # unlikely to be BA Model
 
     C = (1 - cgamma) / (np.arange(d) + 1 + alpha)
     C /= (dd / (2 + alpha))
@@ -105,7 +126,7 @@ def _I_BA(dd, alpha):
 
 def _I_ER(dd, beta):
     # Stub
-    pass
+    return 0
 
 
 def divergence(dd, gtp, para):
@@ -126,10 +147,13 @@ def divergence(dd, gtp, para):
     res : float
         divergence value
     """
-    return locals()['_I_' + gtp](dd, *para)
+    if not isinstance(para, list) and \
+            not isinstance(para, tuple):
+        para = [para]
+    return globals()['_I_' + gtp](dd, *para)
 
 
-def get_deg_dist(G, minlength=100, eps=1e-06):
+def get_deg_dist(G, minlength=100):
     """  Get degree distribution from a graph
 
     Parameters
@@ -138,8 +162,6 @@ def get_deg_dist(G, minlength=100, eps=1e-06):
         adj matrix of an undirected graph. up-trigular
     minlength : int
         mini length of the result
-    eps : float > 0
-        mini value in the result
 
     Returns
     --------------
@@ -147,9 +169,10 @@ def get_deg_dist(G, minlength=100, eps=1e-06):
         len(dd) >= minlength
         min(dd) >= eps
     """
-    hist = np.bincount(G.sum(axis=0), minlength=minlength)[1:]
-    hist = np.array(hist, dtype=float) / np.sum(hist)
-    return adjust_pv(hist, eps)
+    # import ipdb;ipdb.set_trace()
+    # hist = np.bincount(degree(G), minlength=minlength)[1:]
+    hist = np.bincount(degree(G), minlength=minlength)
+    return np.array(hist, dtype=float) / np.sum(hist)
 
 
 def monitor_deg_dis(sigs, gtp, para):
