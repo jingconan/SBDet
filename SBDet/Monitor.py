@@ -1,7 +1,8 @@
 from __future__ import print_function, division, absolute_import
 # from .Util import I1, adjust_pv
-from .Util import adjust_pv, degree
+from .Util import adjust_pv, degree, KL_div
 import numpy as np
+from scipy.stats import poisson
 # from collections import Counter
 # import networkx as nx
 
@@ -124,9 +125,13 @@ def _I_BA(dd, alpha, eps):
     return s1 + s2
 
 
-def _I_ER(dd, beta):
-    # Stub
-    return 0
+def _I_ER(dd, beta, eps):
+    n = len(dd)
+    mu_bar = np.dot(np.arange(n), dd)
+    poisson_pdf = poisson.pmf(range(n), beta)
+    return KL_div(dd, poisson_pdf, eps) + 0.5 * (mu_bar - beta) + \
+        0.5 * mu_bar * np.log(beta) - \
+        0.5 * mu_bar * np.log(mu_bar)
 
 
 def divergence(dd, gtp, para):
@@ -153,7 +158,7 @@ def divergence(dd, gtp, para):
     return globals()['_I_' + gtp](dd, *para)
 
 
-def get_deg_dist(G, minlength=100):
+def get_deg_dist(G, minlength=None):
     """  Get degree distribution from a graph
 
     Parameters
@@ -175,7 +180,7 @@ def get_deg_dist(G, minlength=100):
     return np.array(hist, dtype=float) / np.sum(hist)
 
 
-def monitor_deg_dis(sigs, gtp, para):
+def monitor_deg_dis(sigs, gtp, para, minlength=None):
     """  Monitor the degree distribution
 
     Parameters
@@ -187,10 +192,12 @@ def monitor_deg_dis(sigs, gtp, para):
         graph type
     para : list
         list of parameters
+    minlength : int, optional
+        A minimum number of bins for the degree distribution
 
     Returns
     --------------
     divs : list
         list of divergence value for each sig.
     """
-    return [divergence(get_deg_dist(G), gtp, para) for G in sigs]
+    return [divergence(get_deg_dist(G, minlength), gtp, para) for G in sigs]

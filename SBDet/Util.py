@@ -156,11 +156,7 @@ def adjust_pv(prob, eps):
     return prob
 
 
-
-EPS = 1e-20
-
-
-def I1(nu, mu):
+def KL_div(nu, mu, eps=None):
     """  Calculate the empirical measure of two probability vector nu and mu
 
     Parameters
@@ -186,18 +182,21 @@ def I1(nu, mu):
 
     Examples
     --------------
-    >>> print I1([0.3, 0.7, 0, 0], [0, 0, 0.3, 0.7])
+    >>> from numpy import array
+    >>> print KL_div(array([0.3, 0.7, 0, 0]), array([0, 0, 0.3, 0.7]))
     45.4408375578
 
     """
     assert(len(nu) == len(mu))
     # a = len(nu)
 
-    mu = adjust_pv(mu, EPS)
-    nu = adjust_pv(nu, EPS)
+    if eps:
+        mu = adjust_pv(mu, eps)
+        nu = adjust_pv(nu, eps)
 
-    H = lambda x, y: x * log(x * 1.0 / y)
-    return sum(H(a, b) for a, b in zip(nu, mu))
+    # H = lambda x, y: x * log(x * 1.0 / y)
+    # return sum(H(a, b) for a, b in zip(nu, mu))
+    return np.dot(nu, np.log(nu / mu))
 
 
 def progress_bar(i):
