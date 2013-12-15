@@ -232,3 +232,82 @@ def parseToCoo(f_name, undirected=False):
                 shape=(g_size, g_size))
         sparse_sigs.append(mat)
     return sparse_sigs, nodes
+
+
+"""  Generate Validiation Dataset of SIGs
+"""
+
+
+import copy
+def union_nodes(nodes1, nodes2):
+    """  Union two nodes.
+
+    Parameters
+    ---------------
+    Returns
+    --------------
+    nodes : list
+        union set of nodes1 and nodes2
+    map1, map2 : map from int to int
+        map1 is the map from idx in nodes1 to idx in **nodes**
+        map2 is the map from idx in nodes2 to idx in **nodes**
+    """
+    nodes = copy.copy(nodes1)
+    N1 = len(nodes1)
+    map1 = dict(zip(nodes1, range(N1)))
+    map2 = dict()
+    i = N1
+    for j, n in enumerate(nodes2):
+        idx = map1.get(n)
+        if idx is None: # if it doesn't exist in nodes1
+            nodes.append(n)
+            map2[j] = i
+            i += 1
+            pass
+        else:
+            map2[j] = idx # share the same node
+
+    return nodes, map1, map2
+
+def Mix(dataset1, dataset2, start):
+    """ Mix two sigs dataset.
+
+    Parameters
+    ---------------
+    dataset1, dataset2 : tuple
+        dataset1 = (nodes1, sigs1) and dataset2 = (nodes2, sigs2) are two datasets
+        of SIGs.  It is assumed that len(sigs2) < len(sigs1). This function will
+        mix sigs2 with a segment of sigs1 and return the mixed dataset
+
+        sigs1 and sigs2 are assumed to be a list of scipy.sparse matrix
+
+    start : int
+        the start position of mix. dataset2, will be mixed with
+        sigs1[start:(start+len(sigs2))]
+    Returns
+    --------------
+    sigs : a list of scipy.sparse.coo_matrix
+        mixed sigs dataset
+    """
+    n1, s1 = dataset1
+    n2, s2 = dataset2
+
+    nodes, map1, map2 = union_nodes(n1, n2)
+    g_size = len(nodes)
+
+    def map_sig(sig, map_):
+        I1, J1 = sig.nonzero()
+        I = [map_[x] for x in I1]
+        J = [map_[x] for x in J1]
+        return I, J
+
+    sigs = []
+    for k in xrange(start, start + len(s2)):
+        Im1, Jm1 = map_sig(s1[k], map1)
+        Im2, Jm2 = map_sig(s2[k-start], map2)
+        M = len(Im1) + len(Im2)
+        mat = sp.sparse.coo_matrix((sp.ones(M,), (Im1 + Im2, Jm1 + Jm2)),
+                shape=(g_size, g_size))
+        sigs.append(mat)
+
+    return sigs
