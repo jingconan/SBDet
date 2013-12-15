@@ -147,7 +147,8 @@ MODEL_LIST = ["BA", "ER"]
 
 
 def select_model(sigs):
-    degrees = np.concatenate((sig.sum(axis=0).todense() for sig in sigs), axis=0)  # XXX check
+    degrees = np.concatenate([np.array(sig.sum(axis=0)) for sig in sigs],
+            axis=0)
 
     para_list = []
     lk_list = []
@@ -156,7 +157,7 @@ def select_model(sigs):
         para_list.append(para)
         lk_list.append(lk)
 
-    pos = np.argmax(lk)
+    pos = np.argmax(lk_list)
     return MODEL_LIST[pos], para_list[pos]
 
 
