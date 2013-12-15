@@ -247,18 +247,19 @@ def union_nodes(nodes1, nodes2):
     Returns
     --------------
     nodes : list
-        union set of nodes1 and nodes2
-    map1, map2 : map from int to int
-        map1 is the map from idx in nodes1 to idx in **nodes**
+        union set of nodes1 and nodes2. The first len(nodes1) nodes in *nodes*
+        comes from nodes1.
+
+    map2 : map from int to int
         map2 is the map from idx in nodes2 to idx in **nodes**
     """
     nodes = copy.copy(nodes1)
     N1 = len(nodes1)
-    map1 = dict(zip(nodes1, range(N1)))
+    nodes1_map = dict(zip(nodes1, range(N1)))
     map2 = dict()
     i = N1
     for j, n in enumerate(nodes2):
-        idx = map1.get(n)
+        idx = nodes1_map.get(n)
         if idx is None: # if it doesn't exist in nodes1
             nodes.append(n)
             map2[j] = i
@@ -267,15 +268,15 @@ def union_nodes(nodes1, nodes2):
         else:
             map2[j] = idx # share the same node
 
-    return nodes, map1, map2
+    return nodes, map2
 
-def Mix(dataset1, dataset2, start):
+def mix(dataset1, dataset2, start):
     """ Mix two sigs dataset.
 
     Parameters
     ---------------
     dataset1, dataset2 : tuple
-        dataset1 = (nodes1, sigs1) and dataset2 = (nodes2, sigs2) are two datasets
+        dataset1 = (sigs1, nodes1) and dataset2 = (sigs2, nodes2) are two datasets
         of SIGs.  It is assumed that len(sigs2) < len(sigs1). This function will
         mix sigs2 with a segment of sigs1 and return the mixed dataset
 
@@ -288,11 +289,14 @@ def Mix(dataset1, dataset2, start):
     --------------
     sigs : a list of scipy.sparse.coo_matrix
         mixed sigs dataset
+    nodes : list
+        union of nodes1 and nodes2
     """
-    n1, s1 = dataset1
-    n2, s2 = dataset2
+    s1, n1 = dataset1
+    s2, n2 = dataset2
+    assert(len(s2) <= len(s1))
 
-    nodes, map1, map2 = union_nodes(n1, n2)
+    nodes, map2 = union_nodes(n1, n2)
     g_size = len(nodes)
 
     def map_sig(sig, map_):
@@ -301,13 +305,14 @@ def Mix(dataset1, dataset2, start):
         J = [map_[x] for x in J1]
         return I, J
 
-    sigs = []
+    sigs = copy.deepcopy(s1[:start])
     for k in xrange(start, start + len(s2)):
-        Im1, Jm1 = map_sig(s1[k], map1)
+        Im1, Jm1 = s1[k].nonzero()
         Im2, Jm2 = map_sig(s2[k-start], map2)
         M = len(Im1) + len(Im2)
-        mat = sp.sparse.coo_matrix((sp.ones(M,), (Im1 + Im2, Jm1 + Jm2)),
+        mat = sp.sparse.coo_matrix((sp.ones(M,), \
+                (Im1.tolist() + Im2, Jm1.tolist() + Jm2)),
                 shape=(g_size, g_size))
         sigs.append(mat)
-
-    return sigs
+    sigs.extend(s1[(start + len(s2)):])
+    return sigs, nodes
