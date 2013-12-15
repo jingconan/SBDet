@@ -191,7 +191,6 @@ class Igraph(TrafficGraph):
                     # edge_arrow_size=2, edge_arrow_width=2,
                     # vertex_label= [str(x) for x in range(len(self.ips))],
 
-
 class NetworkXGraph(TrafficGraph):
     """  Traffic Graph that works above networkx.
 
