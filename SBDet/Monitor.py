@@ -1,47 +1,48 @@
 from __future__ import print_function, division, absolute_import
-from .Util import I1, adjust_pv
+# from .Util import I1, adjust_pv
+from .Util import adjust_pv
 import numpy as np
 # from collections import Counter
 # import networkx as nx
 
 
-def _vector_represent_dd(D1, D2):
-    """  Represent Counters as vector
+# def _vector_represent_dd(D1, D2):
+#     """  Represent Counters as vector
 
-    Parameters
-    ---------------
-    D1, D2 : counter class
+#     Parameters
+#     ---------------
+#     D1, D2 : counter class
 
-    Returns
-    --------------
-    H1, H2 : 1-d vector
-        the length of the vector == size of union set of keys in D1 and D2
-    """
-    K1 = D1.keys()
-    K2 = D2.keys()
-    K = set(K1) | set(K2)
-    H1 = np.array([D1.get(key, 0) for key in K], dtype=np.float)
-    H1 /= (np.sum(H1) * 1.0)
-    H2 = np.array([D2.get(key, 0) for key in K], dtype=np.float)
-    H2 /= (np.sum(H2) * 1.0)
-    return H1, H2
+#     Returns
+#     --------------
+#     H1, H2 : 1-d vector
+#         the length of the vector == size of union set of keys in D1 and D2
+#     """
+#     K1 = D1.keys()
+#     K2 = D2.keys()
+#     K = set(K1) | set(K2)
+#     H1 = np.array([D1.get(key, 0) for key in K], dtype=np.float)
+#     H1 /= (np.sum(H1) * 1.0)
+#     H2 = np.array([D2.get(key, 0) for key in K], dtype=np.float)
+#     H2 /= (np.sum(H2) * 1.0)
+#     return H1, H2
 
 
-def KL_div(D1, D2):
-    """  KL divergence of two degree distribution
+# def KL_div(D1, D2):
+#     """  KL divergence of two degree distribution
 
-    Parameters
-    ---------------
-    D1, D2 : Counter
-        frequency of each degree
+#     Parameters
+#     ---------------
+#     D1, D2 : Counter
+#         frequency of each degree
 
-    Returns
-    --------------
-    res : float
-        the Kullback-Leibler divergence between D1 and D2
-    """
-    H1, H2 = _vector_represent_dd(D1, D2)
-    return I1(H1, H2)
+#     Returns
+#     --------------
+#     res : float
+#         the Kullback-Leibler divergence between D1 and D2
+#     """
+#     H1, H2 = _vector_represent_dd(D1, D2)
+#     return I1(H1, H2)
 
 
 def cal_mean_deg(dd):
