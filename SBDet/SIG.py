@@ -2,6 +2,8 @@
 from __future__ import print_function, division, absolute_import
 import os
 import sys
+import scipy as sp
+import numpy as np
 # import numpy as np
 # import networkx as nx
 # import matplotlib.pyplot as plt
@@ -18,6 +20,12 @@ from .Util import progress_bar
 from .Util import DataEndException
 from .Util import igraph
 # from .Util import sp, la, stats
+
+
+""" Calculate Social Interaction Graph (SIGs) from **data file**, which
+    should be the subclass of the **Data** class Look at Data.py for more
+    info about the supported file types
+"""
 
 
 def cal_SIG_low_mem(data_file, interval=10.0, dur=10.0,
@@ -166,3 +174,61 @@ def animate_SIGs(sigs, ani_folder):
         nig = Igraph(graph=ig)
         layout = nig.gen_layout() if layout is None else layout
         nig.plot(ani_folder + "%04d.png" % (i), layout=layout)
+
+
+""" Load SIGs calculated by pcap2sigs tool. Please go to
+https://github.com/hbhzwj/pcap2sigs for more info.
+"""
+
+
+def parseToLil(f_name):
+    with open(f_name, 'r') as fid:
+        line = fid.readline()
+        nodes = line.split()
+        sigs = []
+        g = []
+        line = fid.readline()
+        for line in fid:
+            if line[0] == 'G':
+                sigs.append(g)
+                g = []
+                continue
+
+            res = line.split(' -> ')
+            from_node = int(res[0])
+            to_node = int(res[1])
+            g.append((from_node, to_node))
+        sigs.append(g)
+    return sigs, nodes
+
+def parseToCoo(f_name, undirected=False):
+    """  parse the output of pcap2sigs to scipy.sparse.coo_matrix
+
+    Parameters
+    ---------------
+    f_name : str
+        file name of the pcap2sigs output
+    undirected : bool
+        if undirected is true, then the graph is undirecte, the return value
+            will be up-trilangular matrix.
+    Returns
+    --------------
+    sparse_sigs : list of scipy.sparse.coo_matrix
+        if undirected is true, then each coo_matrix is up-trilangular
+    nodes : list of str
+        the ip address of all nodes
+    """
+    sigs, nodes = parseToLil(f_name)
+    sparse_sigs = []
+    g_size = len(nodes)
+    for g in sigs:
+        N = len(g)
+        I, J = zip(*g)
+        if undirected:
+            IJMat = np.array([I, J], copy=True)
+            I = np.min(IJMat, axis=0)
+            J = np.max(IJMat, axis=0)
+        mat = sp.sparse.coo_matrix((sp.ones(N,), (I, J)),
+                shape=(g_size, g_size))
+        sparse_sigs.append(mat)
+    return sparse_sigs, nodes
