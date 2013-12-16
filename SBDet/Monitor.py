@@ -105,10 +105,9 @@ def _I_BA(dd, alpha, eps):
         in preferential attachment schemes.
     """
     #ignore the zero degrees
-    dd = dd[1:]
-    dd /= np.sum(dd)
-    dd = adjust_pv(dd, eps)  # min(dd) >= eps
-
+    if alpha < -1:
+        raise Exception("alpha=%f. alpha in BA Model should > -1" % (alpha))
+    dd = dd[dd > 0]
     d = len(dd)
     cgamma = np.cumsum(dd)
     crit = np.sum(1 - cgamma)
@@ -125,6 +124,13 @@ def _I_BA(dd, alpha, eps):
     return s1 + s2
 
 
+def _I_URN(dd, beta, eps):
+    dd = dd[1:]
+    dd /= np.sum(dd)
+    dd = adjust_pv(dd, eps)  # min(dd) >= eps
+    return _I_BA(dd, beta, eps)
+
+
 def _I_ER(dd, beta, eps):
     n = len(dd)
     mu_bar = np.dot(np.arange(n), dd)
@@ -132,6 +138,7 @@ def _I_ER(dd, beta, eps):
     return KL_div(dd, poisson_pdf, eps) + 0.5 * (mu_bar - beta) + \
         0.5 * mu_bar * np.log(beta) - \
         0.5 * mu_bar * np.log(mu_bar)
+
 
 
 def divergence(dd, gtp, para):

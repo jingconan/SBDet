@@ -12,44 +12,49 @@ config = ConfigParser.ConfigParser()
 config.read("config.ini")
 # PHI_INIT_SOL = 0.1
 PHI_INIT_SOL = float(config.get("models", "phi_init_sol"))
+# MODEL_LIST = ["BA", "ER"]
+MODEL_LIST = config.get("models", "model_list").split(",")
 
 
-def sample(nodes, edges, k):
+def sample(N, G, k):
     """  Sample degrees of k nodes in a Undirected Graph with **node** as node
     set and **edges** as edge set
 
     Parameters
     ---------------
-    nodes : list
-        set of nodes
-    edge : list of tuple with two-element
-        set of edges
+    N : int
+        size of graph
+    G : scipy sparse matrix
+        adj mat of graph
+    k : int
+        number of sampled nodes in graph
 
     Returns
     --------------
-    res : list of ints
+    res : array
         sampled degree values
     """
-    g = nx.Graph()
-    node_ids = range(len(nodes))
-    g.add_nodes_from(node_ids)
-    g.add_edges_from(edges)
-    return list(g.degree(random.sample(node_ids, k)).values())
+    # g = nx.Graph()
+    # node_ids = range(N)
+    # g.add_nodes_from(node_ids)
+    # g.add_edges_from(edges)
+    sel_nodes = random.sample(range(N), k)
+    return degree(G)[sel_nodes]
 
 
-def mg_sample(nodes, sig_edges, n, k):
+def mg_sample(N, sigs, s_num, n_num):
     """ Multi-Graph Sample. Sample degree values from a sequence of Social
     Interaction Graphs (SIGs)
 
     Parameters
     ---------------
-    nodes : list
-        set of nodes
-    sig_edges : list of graph edge set
+    N : int
+        size of graph
+    sigs : list of graphs
         each graph edge set is again a list of 2-element tuple
-    n : int
+    s_num : int
         sampled number of sigs
-    k : int
+    n_num : int
         sampled number of nodes in each sig
 
     Returns
@@ -58,15 +63,11 @@ def mg_sample(nodes, sig_edges, n, k):
         each row is the sample value for a sig.
 
     """
-    g_num = len(sig_edges)
-    s_g = random.sample(range(g_num), n)
-    s_v = np.zeros((n, k))
+    g_num = len(sigs)
+    s_g = random.sample(sigs, s_num)
+    s_v = np.zeros((s_num, n_num))
     for i, g in enumerate(s_g):
-        edges = zip(*sig_edges[g])
-        if not edges:
-            continue
-        edges = edges[0]
-        s_v[i, :] = sample(nodes, edges, k)
+        s_v[i, :] = sample(N, g, n_num)
 
     return s_v
 
@@ -115,16 +116,26 @@ def _MLE_BA(deg_sample):
     # ds = deg_sample.shape
     nz_deg = deg_sample[deg_sample >= 1]
     n = len(nz_deg)
-    if (np.max(nz_deg) <= 1):
+    if (n == 0):
         warning("no degree value > 1; unlikely to be BA model")
         return np.nan, -np.inf
 
     sl_nz_deg = np.sum(np.log(nz_deg))
     level = -1 * sl_nz_deg * 1.0 / n
     print('level', level)
+    if (level >= 0):
+        warning("level: %f. unlikely to be BA model" % (level))
+        return np.nan, -np.inf
+
     th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level, x0=PHI_INIT_SOL)
+    if th_hat <= -1:
+        warning("Estimated parameter in BA Model invalid")
+        return np.nan, -np.inf
     lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
     return th_hat, lk
+
+def _MLE_URN(deg_sample):
+    return _MLE_BA(deg_sample+1)
 
 
 def mle(deg_sample, model):
@@ -146,12 +157,12 @@ def mle(deg_sample, model):
     return globals()["_MLE_%s" % (model)](deg_sample)
 
 
-MODEL_LIST = ["BA", "ER"]
 
 
-def select_model(sigs):
+def select_model(N, sigs, s_num, n_num, debug=False):
     # degrees = np.concatenate([np.array(sig.sum(axis=0)) for sig in sigs],
-    degrees = np.concatenate([degree(sig) for sig in sigs], axis=0)
+    # degrees = np.concatenate([degree(sig) for sig in sigs], axis=0)
+    degrees = mg_sample(N, sigs, s_num, n_num)
 
     para_list = []
     lk_list = []
@@ -159,6 +170,8 @@ def select_model(sigs):
         para, lk = mle(degrees, model)
         para_list.append(para)
         lk_list.append(lk)
+        if debug:
+            print('model: %s, para: %s, lk: %f' % (model, para, lk))
 
     pos = np.argmax(lk_list)
     return MODEL_LIST[pos], para_list[pos]
