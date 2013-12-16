@@ -7,6 +7,11 @@ import numpy as np
 import scipy as sp
 import networkx as nx
 import random
+import ConfigParser
+config = ConfigParser.ConfigParser()
+config.read("config.ini")
+# PHI_INIT_SOL = 0.1
+PHI_INIT_SOL = float(config.get("models", "phi_init_sol"))
 
 
 def sample(nodes, edges, k):
@@ -98,10 +103,12 @@ def zeta(x, N=100):
 
 
 def phi(x, N=100):
+    # FIXME if x is int, the result is wrong
     k = np.arange(1, N)
     K, X = np.meshgrid(k, x)
     KX = np.power(K, -X)
     return -1 * np.sum(np.log(K) * KX, axis=1) / np.sum(KX, axis=1)
+
 
 
 def _BA_MLE(deg_sample):
@@ -115,7 +122,7 @@ def _BA_MLE(deg_sample):
     sl_nz_deg = np.sum(np.log(nz_deg))
     level = -1 * sl_nz_deg * 1.0 / n
     print('level', level)
-    th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level, x0=3)
+    th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level, x0=PHI_INIT_SOL)
     lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
     return th_hat, lk
 
