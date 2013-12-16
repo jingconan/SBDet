@@ -196,7 +196,7 @@ def KL_div(nu, mu, eps=None):
 
     # H = lambda x, y: x * log(x * 1.0 / y)
     # return sum(H(a, b) for a, b in zip(nu, mu))
-    return np.dot(nu, np.log(nu / mu))
+    return np.dot(nu, np.log(nu) - np.log(mu))
 
 
 def progress_bar(i):
