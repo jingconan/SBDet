@@ -166,14 +166,18 @@ def select_model(N, sigs, s_num, n_num, debug=False):
 
     para_list = []
     lk_list = []
+    debug_ret = dict()
     for model in MODEL_LIST:
         para, lk = mle(degrees, model)
         para_list.append(para)
         lk_list.append(lk)
         if debug:
             print('model: %s, para: %s, lk: %f' % (model, para, lk))
+            debug_ret[model] = (model, para, lk)
 
     pos = np.argmax(lk_list)
+    if debug:
+        return MODEL_LIST[pos], para_list[pos], debug_ret
     return MODEL_LIST[pos], para_list[pos]
 
 
