@@ -71,7 +71,7 @@ def mg_sample(nodes, sig_edges, n, k):
     return s_v
 
 
-def _ER_MLE(deg_sample):
+def _MLE_ER(deg_sample):
     """  Maximium log likelihood estimator for ER model
 
     Parameters
@@ -111,7 +111,7 @@ def phi(x, N=100):
 
 
 
-def _BA_MLE(deg_sample):
+def _MLE_BA(deg_sample):
     # ds = deg_sample.shape
     nz_deg = deg_sample[deg_sample >= 1]
     n = len(nz_deg)
@@ -143,11 +143,7 @@ def mle(deg_sample, model):
     lk : float
         log likelihood value
     """
-    model_dict = {
-        "BA": _BA_MLE,
-        "ER": _ER_MLE,
-    }
-    return model_dict[model](deg_sample)
+    return globals()["_MLE_%s" % (model)](deg_sample)
 
 
 MODEL_LIST = ["BA", "ER"]
