@@ -114,10 +114,11 @@ def phi(x, N=100):
 
 def _MLE_BA(deg_sample):
     # ds = deg_sample.shape
+    deg_sample = deg_sample.ravel()
     nz_deg = deg_sample[deg_sample >= 1]
     n = len(nz_deg)
     if (n == 0):
-        warning("no degree value > 1; unlikely to be BA model")
+        warning("no degree value >= 1; unlikely to be BA model")
         return np.nan, -np.inf
 
     sl_nz_deg = np.sum(np.log(nz_deg))
