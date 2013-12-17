@@ -111,9 +111,7 @@ def phi(x, N=100):
     return -1 * np.sum(np.log(K) * KX, axis=1) / np.sum(KX, axis=1)
 
 
-
-def _MLE_BA(deg_sample):
-    # ds = deg_sample.shape
+def _exponent(deg_sample, fh):
     deg_sample = deg_sample.ravel()
     nz_deg = deg_sample[deg_sample >= 1]
     n = len(nz_deg)
@@ -128,12 +126,40 @@ def _MLE_BA(deg_sample):
         warning("level: %f. unlikely to be BA model" % (level))
         return np.nan, -np.inf
 
-    th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level, x0=PHI_INIT_SOL)
+    th_hat = sp.optimize.newton(lambda x: phi(fh(x)) - level, x0=PHI_INIT_SOL)
     if th_hat <= -1:
         warning("Estimated parameter in BA Model invalid")
         return np.nan, -np.inf
     lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
     return th_hat, lk
+
+def _MLE_BA(deg_sample):
+    return _exponent(deg_sample, lambda x: x + 3.0)
+
+def _MLE_CHJ(deg_sample):
+    return _exponent(deg_sample, lambda x: 1.0 + 1.0 / (1.0 - x))
+
+# def _MLE_BA(deg_sample):
+#     deg_sample = deg_sample.ravel()
+#     nz_deg = deg_sample[deg_sample >= 1]
+#     n = len(nz_deg)
+#     if (n == 0):
+#         warning("no degree value >= 1; unlikely to be BA model")
+#         return np.nan, -np.inf
+
+#     sl_nz_deg = np.sum(np.log(nz_deg))
+#     level = -1 * sl_nz_deg * 1.0 / n
+#     print('level', level)
+#     if (level >= 0):
+#         warning("level: %f. unlikely to be BA model" % (level))
+#         return np.nan, -np.inf
+
+#     th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level, x0=PHI_INIT_SOL)
+#     if th_hat <= -1:
+#         warning("Estimated parameter in BA Model invalid")
+#         return np.nan, -np.inf
+#     lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
+#     return th_hat, lk
 
 def _MLE_URN(deg_sample):
     return _MLE_BA(deg_sample+1)

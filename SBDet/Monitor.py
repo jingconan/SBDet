@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 # from .Util import I1, adjust_pv
-from .Util import adjust_pv, degree, KL_div
+from .Util import adjust_pv, degree, KL_div, xlogx
 import numpy as np
 from scipy.stats import poisson
 # from collections import Counter
@@ -74,6 +74,30 @@ def cal_mean_deg(dd):
 #         raise Exception("Unknown type of graph")
 
 
+def _GenURN(dd, p, beta):
+    if len(dd) ==1: # no interaction
+        return 0
+    dd = dd[dd>0]
+    d = len(dd)
+    assert(np.max(dd) <= 1)
+    assert(np.min(dd) > 0)
+    cgamma = np.cumsum(dd)
+    crit = np.sum(1 - cgamma)
+    assert(abs(np.sum(dd) - 1.0) < 1e-3)
+    if crit > 1:
+        print("[warning]: invalid degree distribution, "
+              "you may need to descrese eps")
+        return -np.inf  # unlikely to be URN Model
+
+    s0 = xlogx(1 - dd[0]) + \
+            (1 - dd[0]) * (- np.log(p + (1-p) * beta * dd[0] / (1.0 + beta)) )
+    C = - np.log(1.0 - p) - np.log(np.arange(1, d) + beta) + \
+            np.log(1 + beta) - np.log(dd[1])
+    s1 = xlogx(1-cgamma[1:]) + np.sum((1 - cgamma[1:]) * C)
+    s2 = (1 - crit) * (np.log(1.0 + beta) - np.log(1.0 - p))
+    return s0 + s1 + s2
+
+
 def _I_BA(dd, alpha, eps):
     """  Rate Function for BA Model
 
@@ -104,24 +128,32 @@ def _I_BA(dd, alpha, eps):
         attachment schemes.Choi, J., & Sethuraman, S. (2011). Large deviations
         in preferential attachment schemes.
     """
-    #ignore the zero degrees
-    if alpha < -1:
-        raise Exception("alpha=%f. alpha in BA Model should > -1" % (alpha))
-    dd = dd[dd > 0]
-    d = len(dd)
-    cgamma = np.cumsum(dd)
-    crit = np.sum(1 - cgamma)
-    assert(abs(np.sum(dd) - 1.0) < 1e-3)
-    if crit > 1:
-        print("[warning]: invalid degree distribution, "
-              "you may need to descrese eps")
-        return -np.inf  # unlikely to be BA Model
+    dd = adjust_pv(dd, eps)  # min(dd) >= eps
+    return _GenURN(dd, 0, alpha + 1)
 
-    C = (1 - cgamma) / (np.arange(d) + 1 + alpha)
-    C /= (dd / (2 + alpha))
-    s1 = np.nansum((1 - cgamma) * np.log(C))
-    s2 = (1 - crit) * np.log(2 + alpha)
-    return s1 + s2
+    #ignore the zero degrees
+    # if alpha < -1:
+    #     raise Exception("alpha=%f. alpha in BA Model should > -1" % (alpha))
+    # dd = dd[dd > 0]
+    # d = len(dd)
+    # cgamma = np.cumsum(dd)
+    # crit = np.sum(1 - cgamma)
+    # assert(abs(np.sum(dd) - 1.0) < 1e-3)
+    # if crit > 1:
+    #     print("[warning]: invalid degree distribution, "
+    #           "you may need to descrese eps")
+    #     return -np.inf  # unlikely to be BA Model
+
+    # C = (1 - cgamma) / (np.arange(d) + 1 + alpha)
+    # C /= (dd / (2 + alpha))
+    # s1 = np.nansum((1 - cgamma) * np.log(C))
+    # s2 = (1 - crit) * np.log(2 + alpha)
+    # return s1 + s2
+
+def _I_CHJ(dd, p, eps):
+    dd = adjust_pv(dd, eps)  # min(dd) >= eps
+    assert(p < 1 and p > 0)
+    return _GenURN(dd, p, 1)
 
 
 def _I_URN(dd, beta, eps):
@@ -184,7 +216,9 @@ def get_deg_dist(G, minlength=None):
     # import ipdb;ipdb.set_trace()
     # hist = np.bincount(degree(G), minlength=minlength)[1:]
     hist = np.bincount(degree(G), minlength=minlength)
-    return np.array(hist, dtype=float) / np.sum(hist)
+    ret = np.array(hist, dtype=float) / np.sum(hist)
+    assert(np.min(ret) >= 0 and np.max(ret) <= 1)
+    return ret
 
 
 def monitor_deg_dis(sigs, gtp, para, minlength=None):

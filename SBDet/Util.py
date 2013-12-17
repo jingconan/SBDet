@@ -632,3 +632,9 @@ def get_quantitative(A, B, W, show=True):
 
 def degree(G):
     return np.array(G.sum(axis=0), dtype=int).ravel()
+
+def xlogx(x):
+    if isinstance(x, float):
+        return  0 if x == 0 else x * np.log(x)
+    x = x[x>0]
+    return np.dot(x, np.log(x))
