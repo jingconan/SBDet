@@ -5,7 +5,7 @@ import sys
 import scipy as sp
 import numpy as np
 # import numpy as np
-# import networkx as nx
+import networkx as nx
 # import matplotlib.pyplot as plt
 # from collections import Counter
 
@@ -325,3 +325,29 @@ def mix(dataset1, dataset2, start):
         sigs.append(mat)
     sigs.extend(s1[(start + len(s2)):])
     return sigs, nodes
+
+
+"""
+Predefined Sigs
+"""
+def _graph_BA(n, m):
+    g = nx.barabasi_albert_graph(n, m)
+    return nx.to_scipy_sparse_matrix(g, format='coo')
+
+def _graph_powerlaw_cluster_graph(n, m, p):
+    g = nx.powerlaw_cluster_graph(n, m, p)
+    return nx.to_scipy_sparse_matrix(g, format='coo')
+
+def _graph_ER(n, p):
+    g = nx.fast_gnp_random_graph(n, p)
+    return nx.to_scipy_sparse_matrix(g, format='coo')
+
+
+def gen_sigs(tp, K, *args, **kwargs):
+    gen_fun = globals()['_graph_' + tp]
+
+    sigs = []
+    for i in xrange(K):
+        sig = gen_fun(*args, **kwargs)
+        sigs.append(sig)
+    return sigs
