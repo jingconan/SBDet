@@ -169,8 +169,7 @@ def _I_ER(dd, beta, eps):
     poisson_pdf = poisson.pmf(range(n), beta)
     return KL_div(dd, poisson_pdf, eps) + 0.5 * (mu_bar - beta) + \
         0.5 * mu_bar * np.log(beta) - \
-        0.5 * mu_bar * np.log(mu_bar)
-
+        0.5 * xlogx(mu_bar)
 
 
 def divergence(dd, gtp, para):
