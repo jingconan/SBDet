@@ -223,13 +223,16 @@ def parseToCoo(f_name, undirected=False):
     g_size = len(nodes)
     for g in sigs:
         N = len(g)
-        I, J = zip(*g)
-        if undirected:
-            IJMat = np.array([I, J], copy=True)
-            I = np.min(IJMat, axis=0)
-            J = np.max(IJMat, axis=0)
-        mat = sp.sparse.coo_matrix((sp.ones(N,), (I, J)),
-                shape=(g_size, g_size))
+        if N == 0:
+            mat = sp.sparse.coo_matrix((g_size, g_size), dtype=np.int)
+        else:
+            I, J = zip(*g)
+            if undirected:
+                IJMat = np.array([I, J], copy=True)
+                I = np.min(IJMat, axis=0)
+                J = np.max(IJMat, axis=0)
+            mat = sp.sparse.coo_matrix((sp.ones(N,), (I, J)),
+                    shape=(g_size, g_size))
         sparse_sigs.append(mat)
     return sparse_sigs, nodes
 
