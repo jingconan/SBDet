@@ -113,6 +113,7 @@ def phi(x, N=100):
 
 def _exponent(deg_sample, fh):
     deg_sample = deg_sample.ravel()
+    old_n = len(deg_sample)
     nz_deg = deg_sample[deg_sample >= 1]
     n = len(nz_deg)
     if (n == 0):
@@ -126,18 +127,36 @@ def _exponent(deg_sample, fh):
         warning("level: %f. unlikely to be BA model" % (level))
         return np.nan, -np.inf
 
-    th_hat = sp.optimize.newton(lambda x: phi(fh(x)) - level, x0=PHI_INIT_SOL)
-    if th_hat <= -1:
-        warning("Estimated parameter in BA Model invalid")
+    try:
+        th_hat = sp.optimize.newton(lambda x: phi(fh(x)) - level, x0=PHI_INIT_SOL)
+    except RuntimeError as e:
+        print(e)
         return np.nan, -np.inf
-    lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
+
+    # lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
+    # lk = -1 * (fh(th_hat)) * sl_nz_deg - n * np.log(zeta(fh(th_hat)))
+    lk = -1 * (fh(th_hat)) * sl_nz_deg - old_n * np.log(zeta(fh(th_hat)))
     return th_hat, lk
 
 def _MLE_BA(deg_sample):
-    return _exponent(deg_sample, lambda x: x + 3.0)
+    th_hat, lk = _exponent(deg_sample, lambda x: x + 3.0)
+    if th_hat <= -1:
+        warning("Estimated parameter in BA Model invalid")
+        return np.nan, -np.inf
+    return th_hat, lk
 
 def _MLE_CHJ(deg_sample):
-    return _exponent(deg_sample, lambda x: 1.0 + 1.0 / (1.0 - x))
+    th_hat, lk = _exponent(deg_sample, lambda x: 1.0 + 1.0 / (1.0 - x))
+    if th_hat < 0 or th_hat > 1:
+        warning("Estimated parameter in CHJ Model invalid")
+        return np.nan, -np.inf
+    return th_hat, lk
+
+# K = 10
+# def _MLE_GCM(deg_sample):
+#     bincount = np.bincount(deg_sample, minlength=K)
+#     if
+#     pass
 
 # def _MLE_BA(deg_sample):
 #     deg_sample = deg_sample.ravel()
