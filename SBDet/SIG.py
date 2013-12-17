@@ -181,10 +181,12 @@ https://github.com/hbhzwj/pcap2sigs for more info.
 """
 
 
-def parseToLil(f_name):
+def parseToLil(f_name, first_k=None):
     with open(f_name, 'r') as fid:
         line = fid.readline()
         nodes = line.split()
+        if first_k:
+            nodes = nodes[:first_k]
         sigs = []
         g = []
         line = fid.readline()
@@ -197,11 +199,13 @@ def parseToLil(f_name):
             res = line.split(' -> ')
             from_node = int(res[0])
             to_node = int(res[1])
+            if first_k and (from_node >= first_k or to_node >= first_k):
+                continue
             g.append((from_node, to_node))
         sigs.append(g)
     return sigs, nodes
 
-def parseToCoo(f_name, undirected=False):
+def parseToCoo(f_name, undirected=False, first_k=None):
     """  parse the output of pcap2sigs to scipy.sparse.coo_matrix
 
     Parameters
@@ -211,6 +215,9 @@ def parseToCoo(f_name, undirected=False):
     undirected : bool
         if undirected is true, then the graph is undirecte, the return value
             will be up-trilangular matrix.
+    first_k : int
+        if first_k is set, each sigs is subgraph of the first k elements
+
     Returns
     --------------
     sparse_sigs : list of scipy.sparse.coo_matrix
@@ -218,7 +225,7 @@ def parseToCoo(f_name, undirected=False):
     nodes : list of str
         the ip address of all nodes
     """
-    sigs, nodes = parseToLil(f_name)
+    sigs, nodes = parseToLil(f_name, first_k)
     sparse_sigs = []
     g_size = len(nodes)
     for g in sigs:
@@ -239,7 +246,6 @@ def parseToCoo(f_name, undirected=False):
 
 """  Generate Validiation Dataset of SIGs
 """
-
 
 import copy
 def union_nodes(nodes1, nodes2):
