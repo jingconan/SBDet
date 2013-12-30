@@ -1,5 +1,6 @@
+"""  Functions related to network anomaly detection.
+"""
 from __future__ import print_function, division, absolute_import
-# from .Util import I1, adjust_pv
 from .Util import adjust_pv, degree, KL_div, xlogx
 import numpy as np
 from scipy.stats import poisson
@@ -73,7 +74,7 @@ def monitor_deg_dis(sigs, gtp, para, minlength=None):
     return [divergence(get_deg_dist(G, minlength), gtp, para) for G in sigs]
 
 
-def _GenURN(dd, p, beta):
+def _aux_I_PA(dd, p, beta):
     if len(dd) == 1:  # no interaction
         return 0
     dd = dd[dd > 0]
@@ -128,39 +129,24 @@ def _I_BA(dd, alpha, eps):
         in preferential attachment schemes.
     """
     dd = adjust_pv(dd, eps)  # min(dd) >= eps
-    return _GenURN(dd, 0, alpha + 1)
-
-    #ignore the zero degrees
-    # if alpha < -1:
-    #     raise Exception("alpha=%f. alpha in BA Model should > -1" % (alpha))
-    # dd = dd[dd > 0]
-    # d = len(dd)
-    # cgamma = np.cumsum(dd)
-    # crit = np.sum(1 - cgamma)
-    # assert(abs(np.sum(dd) - 1.0) < 1e-3)
-    # if crit > 1:
-    #     print("[warning]: invalid degree distribution, "
-    #           "you may need to descrese eps")
-    #     return -np.inf  # unlikely to be BA Model
-
-    # C = (1 - cgamma) / (np.arange(d) + 1 + alpha)
-    # C /= (dd / (2 + alpha))
-    # s1 = np.nansum((1 - cgamma) * np.log(C))
-    # s2 = (1 - crit) * np.log(2 + alpha)
-    # return s1 + s2
+    return _aux_I_PA(dd, 0, alpha + 1)
 
 
 def _I_CHJ(dd, p, eps):
     dd = adjust_pv(dd, eps)  # min(dd) >= eps
     assert(p < 1 and p > 0)
-    return _GenURN(dd, p, 1)
+    return _aux_I_PA(dd, p, 1)
 
 
-def _I_URN(dd, beta, eps):
-    dd = dd[1:]
-    dd /= np.sum(dd)
-    dd = adjust_pv(dd, eps)  # min(dd) >= eps
-    return _I_BA(dd, beta, eps)
+def _I_PA(dd, alpha, p, eps):
+    return min(_I_BA(dd, alpha, eps), _I_CHJ(dd, p, eps))
+
+
+# def _I_URN(dd, beta, eps):
+#     dd = dd[1:]
+#     dd /= np.sum(dd)
+#     dd = adjust_pv(dd, eps)  # min(dd) >= eps
+#     return _I_BA(dd, beta, eps)
 
 
 def _I_ER(dd, beta, eps):
