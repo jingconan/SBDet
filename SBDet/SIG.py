@@ -97,6 +97,8 @@ def union_nodes(nodes1, nodes2):
 
     Parameters
     ---------------
+    nodes1, nodes1 : list of strs
+
     Returns
     --------------
     nodes : list
@@ -190,6 +192,17 @@ def _graph_ER(n, p):
 
 
 def gen_sigs(tp, K, *args, **kwargs):
+    """  Generate K SIGs with type **tp**
+
+    Parameters
+    ---------------
+    tp : str, {'BA', 'ER', 'powerlaw_cluster_graph'}
+        type of the SIG
+
+    Returns
+    --------------
+    sigs : list of scipy sparse matrix.
+    """
     gen_fun = globals()['_graph_' + tp]
 
     sigs = []
