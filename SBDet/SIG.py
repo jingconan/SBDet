@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+""" Functions related to creation and manipulation of Social Interaction
+Graphs (SIGs)
+"""
 from __future__ import print_function, division, absolute_import
 import os
 import sys
