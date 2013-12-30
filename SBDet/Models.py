@@ -2,22 +2,18 @@
 """
 from __future__ import print_function, division, absolute_import
 from .Util import log_fact_mat, warning, degree
-# from SBDet import *
 import numpy as np
 import scipy as sp
-import networkx as nx
 import random
 import ConfigParser
 config = ConfigParser.ConfigParser()
 config.read("config.ini")
-# PHI_INIT_SOL = 0.1
 PHI_INIT_SOL = float(config.get("models", "phi_init_sol"))
-# MODEL_LIST = ["BA", "ER"]
 MODEL_LIST = config.get("models", "model_list").split(",")
 
 
 def sample(N, G, k):
-    """  Sample degrees of k nodes in a Undirected Graph with **node** as node
+    """  Sample degrees of k nodes in a undirected graph with **node** as node
     set and **edges** as edge set
 
     Parameters
@@ -34,10 +30,6 @@ def sample(N, G, k):
     res : array
         sampled degree values
     """
-    # g = nx.Graph()
-    # node_ids = range(N)
-    # g.add_nodes_from(node_ids)
-    # g.add_edges_from(edges)
     sel_nodes = random.sample(range(N), k)
     return degree(G)[sel_nodes]
 
@@ -63,7 +55,6 @@ def mg_sample(N, sigs, s_num, n_num):
         each row is the sample value for a sig.
 
     """
-    g_num = len(sigs)
     s_g = random.sample(sigs, s_num)
     s_v = np.zeros((s_num, n_num))
     for i, g in enumerate(s_g):
@@ -97,6 +88,9 @@ def _MLE_ER(deg_sample):
 
 
 def zeta(x, N=100):
+    """  Riemann zeta function
+    http://en.wikipedia.org/wiki/Riemann_zeta_function
+    """
     k = np.arange(1, N)
     K, X = np.meshgrid(k, x)
     KX = np.power(K, -X)
@@ -104,6 +98,8 @@ def zeta(x, N=100):
 
 
 def phi(x, N=100):
+    """  paritial derivative of zeta divide zeta
+    """
     # FIXME if x is int, the result is wrong
     k = np.arange(1, N)
     K, X = np.meshgrid(k, x)
@@ -111,7 +107,21 @@ def phi(x, N=100):
     return -1 * np.sum(np.log(K) * KX, axis=1) / np.sum(KX, axis=1)
 
 
-def _exponent(deg_sample, fh):
+def _MLE_PA(deg_sample, fh=lambda x: x):
+    """  Maximium Likelihood Estimator of Perferential Attachment Model
+
+    Parameters
+    ---------------
+    deg_sample : list or matrix
+        i.i.d. samples of degrees
+
+    Returns
+    --------------
+        th_hat : float
+            estimated parameter
+        lk : float
+            log likelihood value
+    """
     deg_sample = deg_sample.ravel()
     old_n = len(deg_sample)
     nz_deg = deg_sample[deg_sample >= 1]
@@ -124,11 +134,13 @@ def _exponent(deg_sample, fh):
     level = -1 * sl_nz_deg * 1.0 / n
     print('level', level)
     if (level >= 0):
-        warning("level: %f. unlikely to be BA model" % (level))
+        warning("level: %f. unlikely to be prefertial attachment model"
+                % (level))
         return np.nan, -np.inf
 
     try:
-        th_hat = sp.optimize.newton(lambda x: phi(fh(x)) - level, x0=PHI_INIT_SOL)
+        th_hat = sp.optimize.newton(lambda x: phi(fh(x)) - level,
+                                    x0=PHI_INIT_SOL)
     except RuntimeError as e:
         print(e)
         return np.nan, -np.inf
@@ -138,50 +150,21 @@ def _exponent(deg_sample, fh):
     lk = -1 * (fh(th_hat)) * sl_nz_deg - old_n * np.log(zeta(fh(th_hat)))
     return th_hat, lk
 
+
 def _MLE_BA(deg_sample):
-    th_hat, lk = _exponent(deg_sample, lambda x: x + 3.0)
+    th_hat, lk = _MLE_PA(deg_sample, lambda x: x + 3.0)
     if th_hat <= -1:
         warning("Estimated parameter in BA Model invalid")
         return np.nan, -np.inf
     return th_hat, lk
 
+
 def _MLE_CHJ(deg_sample):
-    th_hat, lk = _exponent(deg_sample, lambda x: 1.0 + 1.0 / (1.0 - x))
+    th_hat, lk = _MLE_PA(deg_sample, lambda x: 1.0 + 1.0 / (1.0 - x))
     if th_hat < 0 or th_hat > 1:
         warning("Estimated parameter in CHJ Model invalid")
         return np.nan, -np.inf
     return th_hat, lk
-
-# K = 10
-# def _MLE_GCM(deg_sample):
-#     bincount = np.bincount(deg_sample, minlength=K)
-#     if
-#     pass
-
-# def _MLE_BA(deg_sample):
-#     deg_sample = deg_sample.ravel()
-#     nz_deg = deg_sample[deg_sample >= 1]
-#     n = len(nz_deg)
-#     if (n == 0):
-#         warning("no degree value >= 1; unlikely to be BA model")
-#         return np.nan, -np.inf
-
-#     sl_nz_deg = np.sum(np.log(nz_deg))
-#     level = -1 * sl_nz_deg * 1.0 / n
-#     print('level', level)
-#     if (level >= 0):
-#         warning("level: %f. unlikely to be BA model" % (level))
-#         return np.nan, -np.inf
-
-#     th_hat = sp.optimize.newton(lambda x: phi(x + 3) - level, x0=PHI_INIT_SOL)
-#     if th_hat <= -1:
-#         warning("Estimated parameter in BA Model invalid")
-#         return np.nan, -np.inf
-#     lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
-#     return th_hat, lk
-
-def _MLE_URN(deg_sample):
-    return _MLE_BA(deg_sample+1)
 
 
 def mle(deg_sample, model):
@@ -190,7 +173,7 @@ def mle(deg_sample, model):
     Parameters
     ---------------
     deg_sample :
-    model : str, {"BA", "ER"}
+    model : str, {"BA", "ER", "CHJ", "PA"}
         type of estimator
 
     Returns
@@ -203,12 +186,25 @@ def mle(deg_sample, model):
     return globals()["_MLE_%s" % (model)](deg_sample)
 
 
+def select_model(degrees, debug=False):
+    """  Select models based on samples of degrees on reference SIGs
 
+    Parameters
+    ---------------
+    degrees : list of matrix
+        sampled degrees
 
-def select_model(N, sigs, s_num, n_num, debug=False):
-    # degrees = np.concatenate([np.array(sig.sum(axis=0)) for sig in sigs],
-    # degrees = np.concatenate([degree(sig) for sig in sigs], axis=0)
-    degrees = mg_sample(N, sigs, s_num, n_num)
+    Returns
+    --------------
+    model : str
+        name of the selected model
+    para :  float or list
+        estimated parameter of the model.
+
+    See Also
+    --------------
+    Use `mg_sample` to sample
+    """
 
     para_list = []
     lk_list = []
@@ -225,13 +221,3 @@ def select_model(N, sigs, s_num, n_num, debug=False):
     if debug:
         return MODEL_LIST[pos], para_list[pos], debug_ret
     return MODEL_LIST[pos], para_list[pos]
-
-
-# def verify_ERGM(normal_sigs, tp, beta_values):
-#     normal_dds = (degree_distribution(G, tp) for G in normal_sigs)
-#     normal_dd = reduce(lambda x,y: x + y, normal_dds)
-#     deg, freq = zip(*normal_dd.iteritems())
-#     freq = np.array(freq, dtype=float)
-#     freq /= (np.sum(freq) * 1.0)
-#     deviation = lambda x: I1(freq, stats.poisson.pmf(deg, x))
-#     return [deviation(b) for b in beta_values]
