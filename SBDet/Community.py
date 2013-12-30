@@ -7,32 +7,32 @@ from subprocess import check_call
 from .Util import np, sp
 
 
-def com_det(A, r_vec, w, lamb, out):
-    """ Community Detection using Revised Modularity Maximization Method
+# def com_det(A, r_vec, w, lamb, out):
+#     """ Community Detection using Revised Modularity Maximization Method
 
-    Is defined as:
-        (0.5 / m) A - (0.5 / m^2) deg * deg' + w * r_rec r_rec' - lamb * I
+#     Is defined as:
+#         (0.5 / m) A - (0.5 / m^2) deg * deg' + w * r_rec r_rec' - lamb * I
 
-    **deg** is the degree sequence of each node.
-    **m** is the edge number of the graph
+#     **deg** is the degree sequence of each node.
+#     **m** is the edge number of the graph
 
-    Parameters
-    ---------------
-    A : symmetric matrix.
-        Adjcant matrix of correlation graph
-    r_vec : list
-        interaction of each node with pivot nodes
+#     Parameters
+#     ---------------
+#     A : symmetric matrix.
+#         Adjcant matrix of correlation graph
+#     r_vec : list
+#         interaction of each node with pivot nodes
 
-    Returns
-    --------------
-    None
-    """
-    n = A.shape[0]
-    deg = np.sum(A, axis=1).reshape(-1)
-    mc = 0.5 * np.sum(deg)
-    M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
-    M += w * np.outer(r_vec, r_vec) - lamb * np.eye(n)
-    return max_cut(M, out)
+#     Returns
+#     --------------
+#     None
+#     """
+#     n = A.shape[0]
+#     deg = np.sum(A, axis=1).reshape(-1)
+#     mc = 0.5 * np.sum(deg)
+#     M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
+#     M += w * np.outer(r_vec, r_vec) - lamb * np.eye(n)
+#     return max_cut(M, out)
 
 
 def com_det_reg(A, r_vec, w1, w2, lamb, out):
@@ -72,27 +72,12 @@ def com_det_reg(A, r_vec, w1, w2, lamb, out):
     zerov = np.array([[0]])
     W = np.vstack([np.hstack([P0, 0.5 * qv]),
                   np.hstack([0.5 * qv.T, zerov])])
-    max_cut(W, out)
+    export_max_cut(W, out)
     return P0, q0, W
 
 
-# def com_det_reg2(A, r_vec, w1, w2, lamb, out):
-#     n = A.shape[0]
-#     deg = np.sum(A, axis=1).reshape(-1)
-#     mc = 0.5 * np.sum(deg)
-#     M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
-#     P0 = M - lamb * np.eye(n) + w1 * np.outer(r_vec, r_vec)
-#     q0 = - 0.5 * w2 * np.ones((n,))
-#     qv = q0.reshape(-1, 1)
-#     zerov = np.array([[0]])
-#     W = np.vstack([np.hstack([P0, 0.5 * qv]),
-#                   np.hstack([0.5 * qv.T, zerov])])
-#     max_cut(W, out)
-#     return P0, q0, W
-
-
-def max_cut(W, out):
-    """  Write the max_cut problem to **out**
+def export_max_cut(W, out):
+    """  Export the max_cut problem to **out**
 
     The max cut problem is:
 
@@ -129,7 +114,7 @@ def max_cut(W, out):
 
 
 def SDPA_writer(c, F, out=sys.stdout):
-    """ Write Problem to SDPA format
+    """ Write Problem to SDPA format. Can also be used by CSDP
 
     See Also
     --------------
