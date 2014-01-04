@@ -165,7 +165,10 @@ def mix(dataset1, dataset2, start):
         J = [map_[x] for x in J1]
         return I, J
 
-    sigs = copy.deepcopy(s1[:start])
+    def reshape(mat, shape):
+        return sp.sparse.coo_matrix((mat.data.tolist(), mat.nonzero()), shape)
+
+    sigs =  [reshape(sig, (g_size, g_size)) for sig in s1[:start]]
     for k in xrange(start, start + len(s2)):
         Im1, Jm1 = s1[k].nonzero()
         Im2, Jm2 = map_sig(s2[k-start], map2)
@@ -174,7 +177,8 @@ def mix(dataset1, dataset2, start):
                                    (Im1.tolist() + Im2, Jm1.tolist() + Jm2)),
                                    shape=(g_size, g_size))
         sigs.append(mat)
-    sigs.extend(s1[(start + len(s2)):])
+    sigs.extend([reshape(sig, (g_size, g_size)) \
+            for sig in s1[(start + len(s2)):]])
     return sigs, nodes
 
 
