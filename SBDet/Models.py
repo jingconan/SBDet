@@ -186,13 +186,16 @@ def mle(deg_sample, model):
     return globals()["_MLE_%s" % (model)](deg_sample)
 
 
-def select_model(degrees, debug=False):
+def select_model(degrees, model_list=None, debug=False):
     """  Select models based on samples of degrees on reference SIGs
 
     Parameters
     ---------------
     degrees : list of matrix
         sampled degrees
+
+    model_list: list of str
+        candidate model list. If not set, use value in config.ini
 
     Returns
     --------------
@@ -205,11 +208,12 @@ def select_model(degrees, debug=False):
     --------------
     Use `mg_sample` to sample
     """
+    model_list = model_list if model_list else MODEL_LIST
 
     para_list = []
     lk_list = []
     debug_ret = dict()
-    for model in MODEL_LIST:
+    for model in model_list:
         para, lk = mle(degrees, model)
         para_list.append(para)
         lk_list.append(lk)
@@ -219,5 +223,5 @@ def select_model(degrees, debug=False):
 
     pos = np.argmax(lk_list)
     if debug:
-        return MODEL_LIST[pos], para_list[pos], debug_ret
-    return MODEL_LIST[pos], para_list[pos]
+        return model_list[pos], para_list[pos], debug_ret
+    return model_list[pos], para_list[pos]
