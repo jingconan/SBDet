@@ -227,7 +227,7 @@ def randomization(S, P0, q0, sn=5000):
     return np.sign(sample[best_one, :])
 
 
-def ident_pivot_nodes(adjs, weights, thres):
+def ident_pivot_nodes(adjs, weights, thres, directed=False):
     """ identify the pivot nodes
 
     Parameters
@@ -239,6 +239,8 @@ def ident_pivot_nodes(adjs, weights, thres):
     thres : float
         a node is 'pivot' if its normalized interactions with other nodes >
         **thres**
+    directed : bool
+        if directed == True, it means the graph is directed graph
 
     Returns
     --------------
@@ -247,14 +249,16 @@ def ident_pivot_nodes(adjs, weights, thres):
     T = len(weights)
     total_inta_mat = np.zeros((N, T))
     for t, adj in enumerate(adjs):
+        if not directed:
+            adj = adj + adj.T
         total_inta_mat[:, t] = adj.sum(axis=1).reshape(-1)
     total_inta_mat = np.dot(total_inta_mat, weights)
     total_inta_mat /= np.max(total_inta_mat)
     pivot_nodes, = np.where(total_inta_mat > thres)
-    return pivot_nodes
+    return pivot_nodes, total_inta_mat
 
 
-def cal_inta_pnodes(adjs, weights, pivot_nodes):
+def cal_inta_pnodes(adjs, weights, pivot_nodes, directed=False):
     """  calculate the interactions of nodes with pivot_nodes using GCM
 
     Parameters
@@ -265,6 +269,8 @@ def cal_inta_pnodes(adjs, weights, pivot_nodes):
         weights of each SIG
     pivot_nodes : list of ints
         a set of nodes that may be leaders or the victims of the botnet
+    directed : bool
+        if directed == True, it means the graph is directed graph
 
     Returns
     --------------
@@ -273,6 +279,8 @@ def cal_inta_pnodes(adjs, weights, pivot_nodes):
     T = len(weights)
     inta_mat = np.zeros((N, T))
     for t, adj in enumerate(adjs):
+        if not directed:
+            adj = adj + adj.T
         res = np.sum(adj[list(pivot_nodes), :].todense(), axis=0).reshape(-1)
         inta_mat[:, t] = res
     inta = np.dot(inta_mat, weights)
@@ -354,7 +362,8 @@ def detect_botnet(sigs, pivot_th, cor_th, w1, w2, lamb):
     A, npcor = cal_cor_graph(sigs, p_nodes, cor_th)
 
     P0, q0, W = com_det_reg(A, inta, w1, w2, lamb, out='./prob.sdpb')
-    check_call('./csdp6.1.0linuxp4/bin/csdp', 'prob.sdpb', 'botnet.sol')
+    # check_call('./csdp6.1.0linuxp4/bin/csdp', 'prob.sdpb', 'botnet.sol')
+    check_call(['csdp', 'prob.sdpb', 'botnet.sol'])
 
     node_num = len(inta)
     Z, X = parse_CSDP_sol('botnet.sol', node_num + 1)
