@@ -59,7 +59,7 @@ def monitor_deg_dis(sigs, gtp, para, minlength=None):
     sigs : list of sparse matrix
         each sparse matrix is adj matrix of a **undirected** Social
         Interaction graph. Assume to be up-trigular
-    gtp : str {'ER', 'BA'}
+    gtp : str {'ER', 'BA', 'PA', 'CHJ'}
         graph type
     para : list
         list of parameters
