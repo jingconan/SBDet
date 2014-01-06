@@ -227,20 +227,18 @@ def randomization(S, P0, q0, sn=5000):
     return np.sign(sample[best_one, :])
 
 
-def ident_pivot_nodes(adjs, weights, thres, directed=False):
+def ident_pivot_nodes(adjs, weights, thres):
     """ identify the pivot nodes
 
     Parameters
     ---------------
     adjs : a list of sparse matrices.
-        SIG. Assume to be symmetric
+        SIG. Assume to be symmetric if the graph is undirected
     weights : a list of float
         weights of each SIG
     thres : float
         a node is 'pivot' if its normalized interactions with other nodes >
         **thres**
-    directed : bool
-        if directed == True, it means the graph is directed graph
 
     Returns
     --------------
@@ -249,8 +247,6 @@ def ident_pivot_nodes(adjs, weights, thres, directed=False):
     T = len(weights)
     total_inta_mat = np.zeros((N, T))
     for t, adj in enumerate(adjs):
-        if not directed:
-            adj = adj + adj.T
         total_inta_mat[:, t] = adj.sum(axis=1).reshape(-1)
     total_inta_mat = np.dot(total_inta_mat, weights)
     total_inta_mat /= np.max(total_inta_mat)
@@ -258,19 +254,17 @@ def ident_pivot_nodes(adjs, weights, thres, directed=False):
     return pivot_nodes, total_inta_mat
 
 
-def cal_inta_pnodes(adjs, weights, pivot_nodes, directed=False):
+def cal_inta_pnodes(adjs, weights, pivot_nodes):
     """  calculate the interactions of nodes with pivot_nodes using GCM
 
     Parameters
     ---------------
     adjs : a list of sparse matrices.
-        SIG. Assume to be symmetric
+        SIG. Assume to be symmetric if the graph is undirected
     weights : a list of float
         weights of each SIG
     pivot_nodes : list of ints
         a set of nodes that may be leaders or the victims of the botnet
-    directed : bool
-        if directed == True, it means the graph is directed graph
 
     Returns
     --------------
@@ -279,8 +273,6 @@ def cal_inta_pnodes(adjs, weights, pivot_nodes, directed=False):
     T = len(weights)
     inta_mat = np.zeros((N, T))
     for t, adj in enumerate(adjs):
-        if not directed:
-            adj = adj + adj.T
         res = np.sum(adj[list(pivot_nodes), :].todense(), axis=0).reshape(-1)
         inta_mat[:, t] = res
     inta = np.dot(inta_mat, weights)
