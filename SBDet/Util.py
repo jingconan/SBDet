@@ -668,3 +668,30 @@ def write_gephi(A, node_label, out):
         out.close()
 
 
+try:
+    import networkx as nx
+    import matplotlib.pyplot as plt
+except:
+    nx = False
+    plt = False
+
+
+def draw_graph(A, igore_iso_nodes, pic_show=False, pic_name=None, pos=None, *args, **kwargs):
+    N = A.shape[0]
+    Asum = A.sum(axis=0)
+    none_iso_nodes, = Asum.nonzero()
+
+    G = nx.from_numpy_matrix(A)
+    if igore_iso_nodes:
+        G.remove_nodes_from(set(range(N)) - set(none_iso_nodes))
+    if isinstance(pos, str):
+        pos = getattr(nx, pos + '_layout')(G)
+    nx.draw(G, pos=pos, *args, **kwargs)
+    if pic_name:
+        plt.savefig(pic_name)
+    if pic_show:
+        plt.show()
+
+    return pos
+
+
