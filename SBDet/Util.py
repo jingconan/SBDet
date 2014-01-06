@@ -638,3 +638,33 @@ def xlogx(x):
         return  0 if x == 0 else x * np.log(x)
     x = x[x>0]
     return np.dot(x, np.log(x))
+
+
+def write_gephi(A, node_label, out):
+    """  write graph to gephi csv format
+
+    Parameters
+    ---------------
+    A : bool matrix
+        adjacent matrix of the graph
+    node_label : dict or list
+        label of nodes
+    out : str or file
+        output file
+    Returns
+    --------------
+    """
+    if isinstance(out, str):
+        need_close_file = True
+        out = open('out', 'w')
+    n = A.shape[0]
+    I, J = A.nonzero()
+    for i, j in zip(I, J):
+        if i == j:
+            continue
+        out.write("%i;%i\n" %(node_label[i], node_label[j]))
+
+    if need_close_file:
+        out.close()
+
+
