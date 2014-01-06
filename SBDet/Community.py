@@ -345,7 +345,7 @@ def detect_botnet(sigs, pivot_th, cor_th, w1, w2, lamb):
     #### Identify the Pivot Nodes ######
     node_num = sigs[0].shape[0]
     weights = np.ones((node_num, )) / node_num  # equal weights
-    p_nodes = ident_pivot_nodes(sigs, weights, pivot_th)
+    p_nodes, total_inta_mat = ident_pivot_nodes(sigs, weights, pivot_th)
 
     #### Calculate interactions of nodes with pivot nodes ####
     inta = cal_inta_pnodes(sigs, weights, p_nodes)
