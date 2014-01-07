@@ -66,6 +66,7 @@ def com_det_reg(A, r_vec, w1, w2, lamb, out):
     deg = np.sum(A, axis=1).reshape(-1)
     mc = 0.5 * np.sum(deg)
     M = A / (2.0 * mc) - np.outer(deg, deg) / ((2.0 * mc) ** 2)
+    # M = A / (2.0 * mc)
     P0 = M - lamb * np.eye(n)
     q0 = w1 * r_vec - 0.5 * w2 * np.ones((n,))
     qv = q0.reshape(-1, 1)
@@ -130,7 +131,7 @@ def SDPA_writer(c, F, out=sys.stdout):
     n = F[0].shape[0]
     print('%d =mdim' % (m), file=out)
     print('%d =nblocks' % (1), file=out)
-    print('%d' % (n), file=out)
+    print('%d %d' % (n, n), file=out)
     print(' '.join([str(cv)for cv in c]), file=out)
     for k, f_mat in enumerate(F):
         I, J = np.triu(f_mat).nonzero()
