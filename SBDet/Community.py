@@ -255,7 +255,7 @@ def ident_pivot_nodes(adjs, weights, thres):
     return pivot_nodes, total_inta_mat
 
 
-def cal_inta_pnodes(adjs, weights, pivot_nodes):
+def cal_inta_pnodes(adjs, weights, pivot_nodes, p_weights):
     """  calculate the interactions of nodes with pivot_nodes using GCM
 
     Parameters
@@ -266,6 +266,8 @@ def cal_inta_pnodes(adjs, weights, pivot_nodes):
         weights of each SIG
     pivot_nodes : list of ints
         a set of nodes that may be leaders or the victims of the botnet
+    p_weights: list of floats
+        weights for each pivot_nodes
 
     Returns
     --------------
@@ -274,7 +276,9 @@ def cal_inta_pnodes(adjs, weights, pivot_nodes):
     T = len(weights)
     inta_mat = np.zeros((N, T))
     for t, adj in enumerate(adjs):
-        res = np.sum(adj[list(pivot_nodes), :].todense(), axis=0).reshape(-1)
+        # res = np.sum(adj[list(pivot_nodes), :].todense(), axis=0).reshape(-1)
+        inta_tmp = adj[list(pivot_nodes), :].todense()
+        res = np.dot(p_weights, inta_tmp).reshape(-1)
         inta_mat[:, t] = res
     inta = np.dot(inta_mat, weights)
     return inta
