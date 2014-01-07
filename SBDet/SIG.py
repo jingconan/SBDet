@@ -129,8 +129,46 @@ def union_nodes(nodes1, nodes2):
     return nodes, map2
 
 
-def mix(dataset1, dataset2, start):
-    """ Mix two sigs dataset.
+def mix_map(dataset1, dataset2, start, map_=None):
+    """ Mix two sigs dataset. Map nodes in dataset2 to existing nodes in
+    dataset1
+
+    Parameters
+    ---------------
+    dataset1, dataset2, start :
+        Refer `mix_append`
+    map_ : dict.
+        key is node label in dataset2, value is node label in dataset1
+        by default, map the first K nodes in dataset1, where K is the number
+        of node in dataset2
+
+    Returns
+    --------------
+    Refer `mix_append`
+    """
+    s1, n1 = dataset1
+    s2, n2 = dataset2
+    assert(len(s2) <= len(s1))
+    assert(len(n2) <= len(n1))
+
+    def map_sig(sig, map_):
+        I1, J1 = sig.nonzero()
+        if not map_:
+            return I1, J1
+        I = [map_[x] for x in I1]
+        J = [map_[x] for x in J1]
+        return I, J
+
+    sigs = copy.deepcopy(s1)
+    for k in xrange(start, start + len(s2)):
+        I, J = map_sig(s2[k-start], map_)
+        for i, j in zip(I, J):
+            sigs[k][i, j] = 1
+    return sigs, n1
+
+
+def mix_append(dataset1, dataset2, start):
+    """ Mix two sigs dataset. Create new nodes for nodes in dataset2
 
     Parameters
     ---------------
