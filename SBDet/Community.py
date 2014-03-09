@@ -218,7 +218,8 @@ def randomization(S, P0, q0, sn=5000):
     sx = S[-1, :-1]
     covar = X - np.outer(sx, sx)
     n = X.shape[0]
-    sample = np.random.multivariate_normal(np.zeros((n,)), covar, (sn,))
+    # sample = np.random.multivariate_normal(np.zeros((n,)), covar, (sn,))
+    sample = np.random.multivariate_normal(sx, covar, (sn,))
     val = np.zeros((sn,))
     for i in xrange(sn):
         fea_sol = np.sign(sample[i, :])
