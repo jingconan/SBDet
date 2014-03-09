@@ -111,9 +111,12 @@ if __name__ == "__main__":
 
     # BA_MLE(s_v)
 
+    # from SBDet import phi
     # xc = np.arange(2.0, 100.0, 0.1)
     # res = phi(xc)
     # plt.plot(xc, res)
+    # plt.xlabel('x')
+    # plt.ylabel('phi(x)')
     # plt.show()
     # print('res', res)
     # import ipdb;ipdb.set_trace()
