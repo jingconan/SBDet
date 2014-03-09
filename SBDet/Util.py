@@ -676,17 +676,45 @@ except:
     plt = False
 
 
-def draw_graph(A, igore_iso_nodes, pic_show=False, pic_name=None, pos=None, *args, **kwargs):
+def draw_graph(A, ignore_nodes, pos=None,
+        node_shape=None, node_color='r', pic_show=False, pic_name=None, *args, **kwargs):
     N = A.shape[0]
-    Asum = A.sum(axis=0)
-    none_iso_nodes, = Asum.nonzero()
+    if node_color == 'r':
+        node_color = ['r'] * N
 
     G = nx.from_numpy_matrix(A)
-    if igore_iso_nodes:
-        G.remove_nodes_from(set(range(N)) - set(none_iso_nodes))
+
+    def remove_from_G(remove_nodes):
+        G.remove_nodes_from(remove_nodes)
+        rest_nodes = set(range(N)) - set(remove_nodes)
+        node_color = [node_color[i] for i in rest_nodes]
+        node_shape = [node_shape[i] for i in rest_nodes]
+
+    if ignore_nodes == 'isolated':
+        Asum = A.sum(axis=0)
+        none_iso_nodes, = Asum.nonzero()
+        # G.remove_nodes_from(set(range(N)) - set(none_iso_nodes))
+        remove_from_G(set(range(N)) - set(none_iso_nodes))
+    elif isinstance(ignore_nodes, list):
+        remove_from_G(ignore_nodes)
+
     if isinstance(pos, str):
         pos = getattr(nx, pos + '_layout')(G)
-    nx.draw(G, pos=pos, *args, **kwargs)
+    # nx.draw(G, pos=pos, *args, **kwargs)
+
+    ns_set = set(node_shape)
+    ns_map = dict(zip(ns_set, [list() for i in xrange(len(ns_set))]))
+    for i, v in enumerate(node_shape):
+        ns_map[v].append(i)
+
+    for shape in ns_set:
+        nodes = nx.draw_networkx_nodes(G, pos, nodelist=ns_map[shape],
+                node_color = [node_color[i] for i in ns_map[shape]],
+                node_shape=shape, *args, **kwargs)
+        # plt.draw()
+    nx.draw_networkx_edges(G, pos, *args, **kwargs)
+    # plt.draw_if_interactive()
+
     if pic_name:
         plt.savefig(pic_name)
     if pic_show:
