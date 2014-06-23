@@ -147,7 +147,8 @@ def _MLE_PA(deg_sample, fh=lambda x: x):
 
     # lk = -1 * (th_hat + 3) * sl_nz_deg - n * np.log(zeta(th_hat + 3))
     # lk = -1 * (fh(th_hat)) * sl_nz_deg - n * np.log(zeta(fh(th_hat)))
-    lk = -1 * (fh(th_hat)) * sl_nz_deg - old_n * np.log(zeta(fh(th_hat)))
+    # lk = -1 * (fh(th_hat)) * sl_nz_deg - old_n * np.log(zeta(fh(th_hat)))
+    lk = -1 * (fh(th_hat)) * sl_nz_deg - n * np.log(zeta(fh(th_hat)))
     return th_hat, lk
 
 
