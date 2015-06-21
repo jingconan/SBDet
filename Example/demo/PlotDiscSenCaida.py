@@ -36,7 +36,7 @@ botnet_nodes = tr['botnet_nodes']
 mix_nodes = tr['mix_nodes']
 nc = ['blue', 'red', 'green', 'black', 'm']
 ns = 'os><x'
-# pos = zload('graph_pos.pkz')
+pos = zload('graph_pos.pkz')
 # import ipdb;ipdb.set_trace()
 shrink_map = tr['shrink_map']
 # pos = [pos[v] for k,v in shrink_map.iteritems()]
@@ -73,8 +73,8 @@ solution_leading_eigen = res.membership
 
 # import ipdb;ipdb.set_trace()
 # res = ig.community_infomap(trials=1)
-# res = ig.community_infomap(trials=50)
-# solution_info_map = res.membership
+res = ig.community_infomap(trials=50)
+solution_info_map = res.membership
 # import ipdb;ipdb.set_trace()
 
 solution_walk_trap = ig.community_walktrap().as_clustering(3).membership
@@ -83,28 +83,32 @@ tr['solution_walk_trap'] = solution_walk_trap
 tr['solution_leading_eigen'] = solution_leading_eigen
 # tr['solution_info_map'] = solution_info_map
 # zdump(tr, 'com-det-compare-res.pkz')
-# sys.exit(0)
 
 
-# P.figure(figsize=(800,600))
-# P.subplot(221)
+# P.figure((800,600))
+P.figure()
+# P.show()
+# import sys; sys.exit(0)
+P.subplot(221)
         # pos='graphviz',
         # pos='spring',
-# pos = draw_graph(A,
-#         None,
-#         pic_show=False,
-#         pos='graphviz',
-#         with_labels=False,
-#         node_size=100,
-#         node_color=[nc[int(i > 0)] for i in solution],
-#         node_shape=[ns[int(i > 0)] for i in solution],
-#         edge_color='grey',
+pos = draw_graph(A,
+        None,
+        pic_show=False,
+        pos=pos,
+        with_labels=False,
+        node_size=100,
+        node_color=[nc[int(i > 0)] for i in solution],
+        node_shape=[ns[int(i > 0)] for i in solution],
+        edge_color='grey',
         # pic_name='./det_res_sdp.pdf'
-        # )
+        )
+P.title('SBDet')
         # pos=pos,
 
-# P.subplot(222)
-P.figure()
+
+P.subplot(222)
+# P.figure()
 pos = draw_graph(A,
         None,
         pic_show=False,
@@ -116,6 +120,7 @@ pos = draw_graph(A,
         node_shape=[ns[int(i)] for i in solution_leading_eigen],
         edge_color='grey',
         )
+P.title('LeadingEigen')
 
 # pos = draw_graph(A,
 #         None,
@@ -130,35 +135,37 @@ pos = draw_graph(A,
 
 
 
-# P.subplot(223)
+P.subplot(223)
 # P.figure()
-# pos = draw_graph(A,
-#         None,
-#         pic_show=False,
-#         pos=pos,
-#         with_labels=False,
-#         node_size=100,
-#         node_color=[nc[int(i > 0)] for i in tr['ref_sol']],
-#         node_shape=[ns[int(i > 0)] for i in tr['ref_sol']],
-#         edge_color='grey',
+pos = draw_graph(A,
+        None,
+        pic_show=False,
+        pos=pos,
+        with_labels=False,
+        node_size=100,
+        node_color=[nc[int(i > 0)] for i in tr['ref_sol']],
+        node_shape=[ns[int(i > 0)] for i in tr['ref_sol']],
+        # edge_color='grey',
         # pic_name='./com_ground_truth.pdf'
-        # )
-zdump(pos, 'graph_pos.pkz')
+        )
+P.title('GroundTruth')
+# zdump(pos, 'graph_pos.pkz')
 # P.figure()
 # P.figure()
 
-# P.subplot(224)
-# pos = draw_graph(A,
-#         None,
-#         pic_show=False,
-#         pos=pos,
-#         with_labels=False,
-#         node_size=100,
-#         node_color=[nc[int(i > 0)] for i in solution_info_map],
-#         node_shape=[ns[int(i > 0)] for i in solution_info_map],
-#         edge_color='grey',
+P.subplot(224)
+pos = draw_graph(A,
+        None,
+        pic_show=False,
+        pos=pos,
+        with_labels=False,
+        node_size=100,
+        node_color=[nc[int(i > 0)] for i in solution_info_map],
+        node_shape=[ns[int(i > 0)] for i in solution_info_map],
+        edge_color='grey',
         # pic_name='./det_res_info_map.pdf'
-        # )
+        )
+P.title('InfoMap')
 
 # P.figure()
 
