@@ -15,10 +15,12 @@ Modules in SBDet
 
         - **sample**: used to sample degrees from a undirected graph.
         - **select_model**: select models based on the samples.
+        
   - Monitor.py: this module implements the graph-based anomaly detection
     algorithm. The most important function is:  
 	    
 	    - **monitor_deg_dis**
+	    
   - Community.py: this file contains the community detection related
     functions.
 
@@ -56,17 +58,31 @@ Please install numpy, networkx, cython using apt-get. Run the following command 
 For CSDP, there is a binary in ./csdp6.1.0linuxp4 folder, you should
 be able to run it directly in Linux. Please add the folder csdp6.1.0linuxp4 to your PATH environment variable.
 Run the following command:
-```$ export PATH=$PATH:<path/to/csdp6.1.0linuxp4>
-```
-<path/to/csdp6.1.0linuxp4> is the absolute path of the folder that contains the csdp binary. For example, it is /home/wangjing/Dropbox/Researc
-h/CyberSecurity/CommunityDetection/social-bot-detection-git/csdp6.1.0linuxp4 in my machine.
 
-If it complains about
+```bash
+$ export PATH=$PATH:<path/to/csdp6.1.0linuxp4/bin>
+```
+<path/to/csdp6.1.0linuxp4/bin> is the absolute path of the folder that contains the csdp binary. For example, it is /home/wangjing/Dropbox/Researc
+h/CyberSecurity/CommunityDetection/social-bot-detection-git/csdp6.1.0linuxp4/bin in my machine.
+
+In case that the check_call function fails and it complains about
 permission problem, please run
     
 ```bash
- $ chomd +x ./csdp6.1.0linuxp4/bin/csdp
+ $ chomd +x path/to/csdp6.1.0linuxp4/bin/csdp
 ```
 
+Demo
+----------------
+There is a small demo in folder Example/demo. It contains two files.
 
+1. BotDiscCaida.py: the file that generate test data and run SBDet algorithm.
+2. PlotDiscSenCaida.py: the file that plots the result.
 
+Run the demo with the following commands:
+
+```bash
+$ cd Example/demo
+$ python BotDiscCaida.py
+$ python PlotDiscSenCaida.py
+```
