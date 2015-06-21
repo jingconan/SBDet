@@ -41,13 +41,32 @@ Steps to run the algorithm on a dataset.
 
 Installation:
 -----------------------------
-This tool depends on numpy, networkx, CSDP, cython.
-Please install numpy, networkx, cython using apt-get.
+This tool depends on 
+
+1. numpy
+2. networkx
+3. igraph
+4. cython
+5. CSDP
+Please install numpy, networkx, cython using apt-get. Run the following command (I have tested in Ubuntu 12.04)
+
+```bash
+ $ sudo apt-get isntall python-numpy python-networkx python-igraph cython
+```
 For CSDP, there is a binary in ./csdp6.1.0linuxp4 folder, you should
-be able to run it directly in Linux. If it complains about
+be able to run it directly in Linux. Please add the folder csdp6.1.0linuxp4 to your PATH environment variable.
+Run the following command:
+```$ export PATH=$PATH:<path/to/csdp6.1.0linuxp4>
+```
+<path/to/csdp6.1.0linuxp4> is the absolute path of the folder that contains the csdp binary. For example, it is /home/wangjing/Dropbox/Researc
+h/CyberSecurity/CommunityDetection/social-bot-detection-git/csdp6.1.0linuxp4 in my machine.
+
+If it complains about
 permission problem, please run
     
 ```bash
  $ chomd +x ./csdp6.1.0linuxp4/bin/csdp
 ```
+
+
 
