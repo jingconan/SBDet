@@ -46,6 +46,7 @@ Installation:
 This tool depends on 
 
 1. numpy
+2. matplotlib
 2. networkx
 3. igraph
 4. cython
@@ -53,7 +54,7 @@ This tool depends on
 Please install numpy, networkx, cython using apt-get. Run the following command (I have tested in Ubuntu 12.04)
 
 ```bash
- $ sudo apt-get isntall python-numpy python-networkx python-igraph cython
+ $ sudo apt-get install python-numpy python-matplotlib python-networkx python-igraph cython
 ```
 For CSDP, there is a binary in ./csdp6.1.0linuxp4 folder, you should
 be able to run it directly in Linux. Please add the folder csdp6.1.0linuxp4 to your PATH environment variable.
