@@ -87,3 +87,6 @@ $ cd Example/demo
 $ python BotDiscCaida.py
 $ python PlotDiscSenCaida.py
 ```
+
+
+The demo is based on the code I used to generated the TCNS journal paper. The raw code for TCNS journal is in folder Example/social-bot-paper-sim/
